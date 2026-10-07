@@ -13,6 +13,12 @@
       "skillPath": "skills/conventional-commit/SKILL.md",
       "computedHash": "f29c9486cede6c7b2df0cfb0a2e4aa67446552b991bcf17d1b309e903171f03d"
     },
+    "jsdoc-typescript-docs": {
+      "source": "patricio0312rev/skills",
+      "sourceType": "github",
+      "skillPath": "foundation/jsdoc-typescript-docs/SKILL.md",
+      "computedHash": "5b4f9de4974d5200db813921484dd4784c77bea7f3c0c79b31472e9546c374fd"
+    },
     "object-oriented-programming": {
       "source": "bsene/skills",
       "sourceType": "github",

@@ -4,7 +4,7 @@ This file gives rules to AI agents that work in this repository.
 
 ## Required skills
 
-You MUST use these four skills in every session. Do not skip them.
+You MUST use these five skills in every session. Do not skip them.
 
 | Skill                         | Use it for                                 | Source                                                                              |
 | ----------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
@@ -12,6 +12,7 @@ You MUST use these four skills in every session. Do not skip them.
 | `asd-ste100`                  | All text that you write for people to read | [skills.sh](https://www.skills.sh/danyuchn/asd-ste100-skill/asd-ste100)             |
 | `object-oriented-programming` | Every time that you write or review code   | [GitHub](https://github.com/bsene/skills/tree/main/object-oriented-programming)     |
 | `typescript-expert`           | Every time that you write TypeScript       | [skills.sh](https://www.skills.sh/sickn33/agentic-awesome-skills/typescript-expert) |
+| `jsdoc-typescript-docs`       | Every JSDoc comment in TypeScript          | [skills.sh](https://www.skills.sh/patricio0312rev/skills/jsdoc-typescript-docs)     |
 
 The skill files are in `.agents/skills/`. The folder `.claude/skills/` links to
 them. To install them again, run these commands:
@@ -21,6 +22,7 @@ npx skills add https://github.com/github/awesome-copilot --skill conventional-co
 npx skills add https://github.com/danyuchn/asd-ste100-skill --skill asd-ste100
 npx skills add https://github.com/bsene/skills --skill object-oriented-programming
 npx skills add https://github.com/sickn33/agentic-awesome-skills --skill typescript-expert
+npx skills add https://github.com/patricio0312rev/skills --skill jsdoc-typescript-docs
 ```
 
 ### Commit history
@@ -81,6 +83,19 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - The skill also talks about Node.js tools (webpack, Vite, ESM/CJS). This
   project uses Deno. Apply only the TypeScript rules. Where a rule in this file
   is different, follow this file.
+
+### jsdoc-typescript-docs
+
+- Use this skill when you write or change a JSDoc comment.
+- Give each `.ts` file a JSDoc comment with the tag `@module` at the top.
+- Give a JSDoc comment to each export and to each member of a class. This
+  includes `private` members. Use one line for a simple member.
+- Use the TypeDoc style: `@param name - text`, `@returns`, `@throws {Error}`,
+  `@typeParam`, `@remarks`, and `@example` with a code block.
+- Write each JSDoc comment in ASD-STE100.
+- The skill also shows TypeDoc setup and CI steps. These are for Node.js. Do not
+  add them. This project uses Deno.
+- Check the comments with `deno doc --lint "src/**/*.ts"`. It must pass.
 
 ### Code style
 

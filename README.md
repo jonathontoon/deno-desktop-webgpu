@@ -7,7 +7,7 @@ window directly.
 ## Set up
 
 Install [Deno](https://deno.com) 2.9 or later. No other package is needed.
-Then run `deno task setup` once. It turns on the commit message check.
+Then run `deno task setup` once. It sets the git user and turns on the commit message check. GitHub also checks each push. A commit that names an agent fails the check.
 
 You need a computer with a GPU that supports WebGPU.
 

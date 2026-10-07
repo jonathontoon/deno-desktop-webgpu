@@ -32,7 +32,10 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - Never set an agent as the author or the committer. Use the real user: `Jonathon Toon <1197942+jonathontoon@users.noreply.github.com>`.
 - Never add `Co-Authored-By`, `Claude-Session`, `Generated with`, or any other line that names an agent or an AI tool.
 - Never name an agent in a commit message, a pull request title, or a pull request description.
-- Run `deno task setup` once in each new clone. It turns on the `.githooks/commit-msg` hook. The hook rejects a commit that breaks these rules.
+- Run `deno task setup` as the first command of each session, before any commit. It sets the real user and turns on the `.githooks/commit-msg` hook. The global git user on a cloud computer can be an agent. The hook rejects a commit that breaks these rules.
+- Never use `git commit --no-verify`.
+- These rules also apply to commits that you make with GitHub API tools. Check the author of the commit before you use them.
+- The workflow `.github/workflows/commit-policy.yml` checks each push on GitHub. A push that names an agent in a commit fails the check.
 - If `git config user.name` or `git config user.email` shows an agent, change it for this repository before you commit.
 
 ### conventional-commit

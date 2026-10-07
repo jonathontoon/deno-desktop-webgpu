@@ -14,7 +14,7 @@
     "format": "deno fmt",
     "format:check": "deno fmt --check",
     "verify": "deno task format:check && deno task lint && deno task check",
-    "setup": "git config core.hooksPath .githooks"
+    "setup": "sh .githooks/setup.sh"
   },
   "fmt": {
     "useTabs": false,

@@ -52,6 +52,6 @@ export class TriangleDrawable extends PipelineDrawable {
     uniforms: Float32Array,
   ): void {
     uniforms[0] = frame.time / MS_PER_SECOND;
-    uniforms[1] = frame.aspect;
+    uniforms[1] = frame.aspectRatio;
   }
 }

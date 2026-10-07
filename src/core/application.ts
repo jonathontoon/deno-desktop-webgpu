@@ -91,12 +91,15 @@ export class Application implements WindowDelegate, RenderLoopDelegate {
    *
    * @param time - The time, in milliseconds.
    */
-  public renderLoopDidTick(time: number): void {
+  public renderLoopDidRequestFrame(time: number): void {
     if (this.appWindow.isClosed()) {
       this.loop.stop();
       return;
     }
-    this.renderer.render(this.scene, { time, aspect: this.appWindow.aspect });
+    this.renderer.render(this.scene, {
+      time,
+      aspectRatio: this.appWindow.aspectRatio,
+    });
     this.appWindow.present();
   }
 

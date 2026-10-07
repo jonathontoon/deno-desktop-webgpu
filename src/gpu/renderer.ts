@@ -64,7 +64,7 @@ export class Renderer {
    *
    * @example
    * ```typescript
-   * renderer.render(scene, { time: performance.now(), aspect: 4 / 3 });
+   * renderer.render(scene, { time: performance.now(), aspectRatio: 4 / 3 });
    * ```
    */
   public render(drawable: Drawable, frame: FrameInfo): void {

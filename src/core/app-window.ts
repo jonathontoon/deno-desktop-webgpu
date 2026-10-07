@@ -72,7 +72,7 @@ export class AppWindow {
   }
 
   /** The width of the surface divided by its height. */
-  public get aspect(): number {
+  public get aspectRatio(): number {
     return this.surface.width / this.surface.height;
   }
 

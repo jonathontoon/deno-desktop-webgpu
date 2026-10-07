@@ -23,7 +23,7 @@ export interface FrameInfo {
   /** The time, in milliseconds. */
   readonly time: number;
   /** The width of the window divided by its height. */
-  readonly aspect: number;
+  readonly aspectRatio: number;
 }
 
 /**
@@ -67,9 +67,9 @@ export interface WindowDelegate {
 /** The render loop tells its delegate when to draw a frame. */
 export interface RenderLoopDelegate {
   /**
-   * Draw one frame now.
+   * The loop asks for a frame. Draw one frame now.
    *
    * @param time - The time, in milliseconds.
    */
-  renderLoopDidTick(time: number): void;
+  renderLoopDidRequestFrame(time: number): void;
 }

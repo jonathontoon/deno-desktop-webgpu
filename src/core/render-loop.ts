@@ -82,7 +82,7 @@ export class RenderLoop {
 
   /** Tell the delegate to draw, then plan the next tick if the loop still runs. */
   private tick(): void {
-    this.delegate.renderLoopDidTick(performance.now());
+    this.delegate.renderLoopDidRequestFrame(performance.now());
     if (this.running) {
       this.timer = setTimeout(() => this.tick(), this.frameMs);
     }

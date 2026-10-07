@@ -1,0 +1,8 @@
+dist/
+*.app
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.msi
+.env

@@ -1,0 +1,18 @@
+#!/bin/sh
+# Reject commit messages and identities that name an AI agent.
+# See "Commit history" in AGENTS.md.
+
+PATTERN='claude|anthropic|copilot|chatgpt|openai|co-authored-by|generated (with|by)'
+
+if grep -v '^#' "$1" | grep -E -i -q "$PATTERN"; then
+  echo "commit-msg: the message names an agent or has an attribution line." >&2
+  echo "Remove it. Agents must never appear in the commit history." >&2
+  exit 1
+fi
+
+IDENTITY="$(git var GIT_AUTHOR_IDENT) $(git var GIT_COMMITTER_IDENT)"
+if echo "$IDENTITY" | grep -E -i -q "$PATTERN"; then
+  echo "commit-msg: the author or committer is an agent." >&2
+  echo "Set git user.name and user.email to the real user." >&2
+  exit 1
+fi

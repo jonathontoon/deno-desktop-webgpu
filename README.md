@@ -25,12 +25,15 @@ You need a computer with a GPU that supports WebGPU.
 
 ## Files
 
-| File              | Purpose                                                    |
-| ----------------- | ---------------------------------------------------------- |
-| `src/app.ts`      | Entry point. It opens the window and runs the render loop. |
-| `src/renderer.ts` | Holds the pipeline and the draw calls.                     |
-| `src/shader.wgsl` | Holds the WGSL shader code.                                |
-| `deno.json`       | Settings. It selects the `raw` backend.                    |
+| File               | Purpose                                                      |
+| ------------------ | ------------------------------------------------------------ |
+| `src/app.ts`       | Entry point. It calls `Application.launch()`.                |
+| `src/constants.ts` | Holds all fixed values.                                      |
+| `src/types.ts`     | Holds all shared types and protocols.                        |
+| `src/core/`        | `Application`, `AppWindow`, and `RenderLoop`.                |
+| `src/gpu/`         | `GPUContext` and `Renderer`. They use the GPU.               |
+| `src/scene/`       | `Scene`, the drawable classes, and the `.wgsl` shader files. |
+| `deno.json`        | Settings. It selects the `raw` backend.                      |
 
 ## Agents
 

@@ -132,26 +132,60 @@ to the window directly with WebGPU.
 | `src/core/`        | `Application`, `AppWindow`, and `RenderLoop`.                |
 | `src/gpu/`         | `GPUContext` and `Renderer`. They use the GPU.               |
 | `src/scene/`       | `Scene`, the drawable classes, and the `.wgsl` shader files. |
+| `src/testing/`     | Fake GPU and window objects for the unit tests.              |
+| `src/**/*.test.ts` | The unit tests. Each one is next to the file that it tests.  |
 | `deno.json`        | Deno settings, tasks, and the `raw` backend.                 |
 
 ## Commands
 
 Run all commands with `deno task <name>`.
 
-| Task           | What it does                                                 |
-| -------------- | ------------------------------------------------------------ |
-| `dev`          | Start the desktop app with hot module reloading.             |
-| `build`        | Build the desktop app.                                       |
-| `check`        | Check the types of `src/app.ts` with the desktop type files. |
-| `lint`         | Run `deno lint`.                                             |
-| `lint:fix`     | Run `deno lint --fix`.                                       |
-| `format`       | Format all files with `deno fmt`.                            |
-| `format:check` | Check the format. It changes no file.                        |
-| `verify`       | Run `format:check`, `lint`, and `check`.                     |
+| Task            | What it does                                                                   |
+| --------------- | ------------------------------------------------------------------------------ |
+| `dev`           | Start the desktop app with hot module reloading.                               |
+| `build`         | Build the desktop app.                                                         |
+| `check`         | Check the types of `src/app.ts` and of the tests, with the desktop type files. |
+| `lint`          | Run `deno lint`.                                                               |
+| `lint:fix`      | Run `deno lint --fix`.                                                         |
+| `format`        | Format all files with `deno fmt`.                                              |
+| `format:check`  | Check the format. It changes no file.                                          |
+| `fix`           | Run `deno fmt` and `deno lint --fix`.                                          |
+| `doc:lint`      | Check the JSDoc comments with `deno doc --lint`.                               |
+| `test`          | Run the unit tests.                                                            |
+| `test:coverage` | Run the unit tests and show the test coverage.                                 |
+| `verify`        | Run `format:check`, `lint`, `check`, `doc:lint`, and `test`.                   |
+
+## Tests and checks
+
+A commit succeeds only when all of these checks pass: format, lint, types, JSDoc,
+and unit tests. The hook `.githooks/pre-commit` runs `deno task verify`. A
+failed check stops the commit. GitHub runs the same checks on each push
+(`.github/workflows/verify.yml`).
+
+- Write a unit test for each new or changed function or class. Put the test in
+  a file with the name `<file>.test.ts` next to the file that it tests.
+- Test the behavior, not the way the code does it. A test must fail when the
+  behavior breaks.
+- The tests must not need a GPU or a display. Use the fakes in
+  `src/testing/fakes.ts`. Add a new fake there when a test needs one.
+- Each `*.test.ts` file runs in its own isolate. So a singleton class can be
+  initialized one time in each test file. Test the order in one `Deno.test` with
+  `t.step`.
+- Use `FakeTime` from `@std/testing/time` for timers. Do not use real waits.
+- Give each test file and each export of `src/testing/` a JSDoc comment. The
+  command `deno task doc:lint` checks them.
+- `deno doc --lint` does not flag an undocumented export if it is the first
+  export of a file and it follows the module comment at once. Put a JSDoc
+  comment on that export yourself.
+- `deno test` has no desktop type files. So the `test` task uses `--no-check`,
+  and `deno task check` checks the types of the tests.
+- Never use `git commit --no-verify`. Never skip, disable, or delete a test to
+  make a check pass. Fix the cause.
 
 ## Rules for changes
 
-1. Run `deno task verify` before you finish. It must pass.
+1. Run `deno task verify` before you finish. It must pass. It runs the format
+   check, the lint, the type check, the JSDoc check, and the unit tests.
 2. Use the Deno tools `deno fmt` and `deno lint`. Do not add ESLint or Prettier.
    Always end statements with a semicolon. Always use double quotes for strings.
    The `fmt` and `lint` sections of `deno.json` set these rules.

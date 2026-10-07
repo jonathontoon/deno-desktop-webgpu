@@ -4,13 +4,14 @@ This file gives rules to AI agents that work in this repository.
 
 ## Required skills
 
-You MUST use these three skills in every session. Do not skip them.
+You MUST use these four skills in every session. Do not skip them.
 
-| Skill                         | Use it for                                 | Source                                                                          |
-| ----------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------- |
-| `conventional-commit`         | Every git commit message                   | [skills.sh](https://www.skills.sh/github/awesome-copilot/conventional-commit)   |
-| `asd-ste100`                  | All text that you write for people to read | [skills.sh](https://www.skills.sh/danyuchn/asd-ste100-skill/asd-ste100)         |
-| `object-oriented-programming` | Every time that you write or review code   | [GitHub](https://github.com/bsene/skills/tree/main/object-oriented-programming) |
+| Skill                         | Use it for                                 | Source                                                                              |
+| ----------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `conventional-commit`         | Every git commit message                   | [skills.sh](https://www.skills.sh/github/awesome-copilot/conventional-commit)       |
+| `asd-ste100`                  | All text that you write for people to read | [skills.sh](https://www.skills.sh/danyuchn/asd-ste100-skill/asd-ste100)             |
+| `object-oriented-programming` | Every time that you write or review code   | [GitHub](https://github.com/bsene/skills/tree/main/object-oriented-programming)     |
+| `typescript-expert`           | Every time that you write TypeScript       | [skills.sh](https://www.skills.sh/sickn33/agentic-awesome-skills/typescript-expert) |
 
 The skill files are in `.agents/skills/`. The folder `.claude/skills/` links to
 them. To install them again, run these commands:
@@ -19,6 +20,7 @@ them. To install them again, run these commands:
 npx skills add https://github.com/github/awesome-copilot --skill conventional-commit
 npx skills add https://github.com/danyuchn/asd-ste100-skill --skill asd-ste100
 npx skills add https://github.com/bsene/skills --skill object-oriented-programming
+npx skills add https://github.com/sickn33/agentic-awesome-skills --skill typescript-expert
 ```
 
 ### Commit history
@@ -66,6 +68,32 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - Use "Object Calisthenics" only when the user asks for a strict review.
 - The skill examples use Node.js and NestJS. This project uses Deno. Use Deno
   APIs and the rules in this file.
+- A class that has exactly one instance MUST be a singleton. Give it a private
+  constructor, a `static initialize(...)` method, and a `static get shared()`
+  accessor. Create each singleton one time, in `Application.launch()`. Pass it
+  to other objects through their constructor. Do not call `shared` in the middle
+  of a method.
+
+### typescript-expert
+
+- Use this skill to evaluate all TypeScript that you write or change.
+- Fix each problem that the skill finds. Then run `deno task verify`.
+- The skill also talks about Node.js tools (webpack, Vite, ESM/CJS). This
+  project uses Deno. Apply only the TypeScript rules. Where a rule in this file
+  is different, follow this file.
+
+### Code style
+
+- Write acronyms in all capitals in names. Example: `GPUContext`, not
+  `GpuContext`.
+- Use hyphens in file names. Example: `app-window.ts`. Do not use underscores.
+- Use TypeScript patterns, not JavaScript patterns. Use the keywords `private`,
+  `protected`, `readonly`, `abstract`, and `override`. Do not use `#` private
+  fields. Do not use `any`. Write the return type of each method.
+- Use `interface` for object shapes and protocols. Use `type` for unions and
+  aliases.
+- Put each fixed value in `src/constants.ts`. Put each shared type and protocol
+  in `src/types.ts`. Do not write a magic value inside a class.
 
 ## Project
 
@@ -74,12 +102,15 @@ It uses the `raw` backend. The `raw` backend gives a native window with no web
 engine. There is no webview, no HTML, and no DOM. The code in `src/` draws
 to the window directly with WebGPU.
 
-| Path              | Purpose                                                    |
-| ----------------- | ---------------------------------------------------------- |
-| `src/app.ts`      | Entry point. It opens the window and runs the render loop. |
-| `src/renderer.ts` | Holds the pipeline and the draw calls.                     |
-| `src/shader.wgsl` | Holds the WGSL shader code.                                |
-| `deno.json`       | Deno settings, tasks, and the `raw` backend.               |
+| Path               | Purpose                                                      |
+| ------------------ | ------------------------------------------------------------ |
+| `src/app.ts`       | Entry point. It calls `Application.launch()`.                |
+| `src/constants.ts` | Holds all fixed values.                                      |
+| `src/types.ts`     | Holds all shared types and protocols.                        |
+| `src/core/`        | `Application`, `AppWindow`, and `RenderLoop`.                |
+| `src/gpu/`         | `GPUContext` and `Renderer`. They use the GPU.               |
+| `src/scene/`       | `Scene`, the drawable classes, and the `.wgsl` shader files. |
+| `deno.json`        | Deno settings, tasks, and the `raw` backend.                 |
 
 ## Commands
 

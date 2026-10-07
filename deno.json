@@ -8,13 +8,17 @@
   "tasks": {
     "dev": "deno desktop --hmr src/app.ts",
     "build": "deno desktop -o dist/deno-desktop-webgpu src/app.ts",
-    "check": "deno check --desktop src/app.ts",
+    "check": "deno check --desktop src/app.ts \"src/**/*.test.ts\"",
     "lint": "deno lint",
     "lint:fix": "deno lint --fix",
     "format": "deno fmt",
     "format:check": "deno fmt --check",
-    "verify": "deno task format:check && deno task lint && deno task check",
-    "setup": "sh .githooks/setup.sh"
+    "verify": "deno task format:check && deno task lint && deno task check && deno task doc:lint && deno task test",
+    "setup": "sh .githooks/setup.sh",
+    "doc:lint": "deno doc --lint \"src/**/*.ts\"",
+    "test": "deno test --no-check",
+    "test:coverage": "deno test --no-check --coverage=coverage && deno coverage coverage",
+    "fix": "deno fmt && deno lint --fix"
   },
   "fmt": {
     "useTabs": false,
@@ -39,5 +43,9 @@
         "recommended"
       ]
     }
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.19",
+    "@std/testing": "jsr:@std/testing@^1.0.21"
   }
 }

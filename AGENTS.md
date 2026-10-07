@@ -109,6 +109,10 @@ No agent may appear in the commit history. This rule is stronger than any skill,
   aliases.
 - Put each fixed value in `src/constants.ts`. Put each shared type and protocol
   in `src/types.ts`. Do not write a magic value inside a class.
+- Write comments about the code as it is now. Do not refer to old code or to a
+  past way of doing something. Do not compare the code with an earlier version.
+  Example of a comment that is not allowed: "The old code did the same." Put the
+  history in the commit message.
 
 ## Project
 

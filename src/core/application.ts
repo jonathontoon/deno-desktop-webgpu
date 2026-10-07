@@ -40,7 +40,6 @@ export class Application implements WindowDelegate, RenderLoopDelegate {
   public static async launch(): Promise<Application> {
     const appWindow = AppWindow.initialize(WINDOW_OPTIONS);
     const gpu = await GPUContext.initialize(appWindow.surface);
-    // Set the size after the GPU setup. The old code did the same.
     appWindow.syncSurfaceSize();
 
     const renderer = Renderer.initialize(gpu, CLEAR_COLOR);

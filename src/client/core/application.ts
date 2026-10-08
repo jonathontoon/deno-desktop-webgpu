@@ -36,6 +36,9 @@ export class Application implements CanvasDelegate {
   /** The canvas that shows the frames. */
   private readonly canvas: Canvas;
 
+  /** The GPU device and the WebGPU context of the canvas. */
+  private readonly graphics: Graphics;
+
   /** The object that draws one frame. */
   private readonly renderer: Renderer;
 
@@ -60,10 +63,10 @@ export class Application implements CanvasDelegate {
   public constructor(element: HTMLCanvasElement, device: GPUDevice) {
     Application.holder.assertEmpty();
     this.canvas = new Canvas(element);
-    const graphics = new Graphics(device, this.canvas.surface);
-    this.renderer = new Renderer(graphics, CLEAR_COLOR);
+    this.graphics = new Graphics(device, this.canvas.surface);
+    this.renderer = new Renderer(this.graphics, CLEAR_COLOR);
     this.scene = new Scene();
-    this.scene.add(new Triangle(graphics));
+    this.scene.add(new Triangle(this.graphics));
     Application.holder.claim(this);
   }
 

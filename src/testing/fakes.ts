@@ -175,24 +175,41 @@ const DEFAULT_CANVAS_HEIGHT = 150;
 export interface FakeSurface {
   /** The fake canvas. Give it to the code under test. */
   readonly surface: HTMLCanvasElement;
-  /** The context that `getContext` gives. It is `null` when a test asks. */
+  /** The context that `getContext("webgpu")` gives. It is `null` when a test asks. */
   readonly context: GPUCanvasContext | null;
   /** The arguments of each `configure` call. */
   readonly configurations: GPUCanvasConfiguration[];
   /** The view that the texture of the context gives. */
   readonly view: GPUTextureView;
+  /** The kinds of context that the code under test asked for. */
+  readonly requestedKinds: string[];
+}
+
+/** The kinds of context that a fake canvas gives. */
+export interface FakeSurfaceOptions {
+  /** `false` makes `getContext("webgpu")` give `null`. The default is `true`. */
+  readonly webgpu?: boolean;
+  /** The context for `getContext("webgl2")`. The default is `null`. */
+  readonly webgl2?: WebGL2RenderingContext | null;
 }
 
 /**
  * Make a fake canvas.
  *
- * @param hasContext - `false` makes `getContext` give `null`.
+ * @param options - Which kinds of context the canvas gives. A boolean is the
+ * same as `{ webgpu: boolean }`.
  * @returns The canvas and the records of its calls.
  */
-export function createFakeSurface(hasContext = true): FakeSurface {
+export function createFakeSurface(
+  options: boolean | FakeSurfaceOptions = true,
+): FakeSurface {
+  const { webgpu = true, webgl2 = null } = typeof options === "boolean"
+    ? { webgpu: options }
+    : options;
   const view = fake<GPUTextureView>({});
   const configurations: GPUCanvasConfiguration[] = [];
-  const context = hasContext
+  const requestedKinds: string[] = [];
+  const context = webgpu
     ? fake<GPUCanvasContext>({
       configure: (configuration: GPUCanvasConfiguration) => {
         configurations.push(configuration);
@@ -204,15 +221,93 @@ export function createFakeSurface(hasContext = true): FakeSurface {
   const surface = fake<HTMLCanvasElement>({
     width: DEFAULT_CANVAS_WIDTH,
     height: DEFAULT_CANVAS_HEIGHT,
-    getContext: () => context,
+    getContext: (kind: string) => {
+      requestedKinds.push(kind);
+      if (kind === "webgpu") {
+        return context;
+      }
+      return kind === "webgl2" ? webgl2 : null;
+    },
   });
-  const record: FakeSurface = {
-    surface,
-    context,
-    configurations,
-    view,
-  };
-  return record;
+  return { surface, context, configurations, view, requestedKinds };
+}
+
+/** A fake WebGL2 context and the records of the calls that it received. */
+export interface FakeGL {
+  /** The fake context. Give it to the code under test. */
+  readonly gl: WebGL2RenderingContext;
+  /** The names of the calls, in the order that they happened. */
+  readonly events: string[];
+  /** The source code of each shader, in the order of `shaderSource` calls. */
+  readonly sources: string[];
+  /** The last number that `uniform1f` got, by the name of the uniform. */
+  readonly uniforms: Map<string, number>;
+}
+
+/** What a fake WebGL2 context does when a shader or a program is made. */
+export interface FakeGLOptions {
+  /** `false` makes the shaders fail to compile. The default is `true`. */
+  readonly compiles?: boolean;
+  /** `false` makes the program fail to link. The default is `true`. */
+  readonly links?: boolean;
+}
+
+/**
+ * Make a fake WebGL2 context.
+ *
+ * @param options - Whether the shaders compile and the program links.
+ * @returns The context and the records of its calls.
+ */
+export function createFakeGL(options: FakeGLOptions = {}): FakeGL {
+  const { compiles = true, links = true } = options;
+  const events: string[] = [];
+  const sources: string[] = [];
+  const uniforms = new Map<string, number>();
+
+  const gl = fake<WebGL2RenderingContext>({
+    VERTEX_SHADER: 0x8B31,
+    FRAGMENT_SHADER: 0x8B30,
+    COMPILE_STATUS: 0x8B81,
+    LINK_STATUS: 0x8B82,
+    CULL_FACE: 0x0B44,
+    BACK: 0x0405,
+    CW: 0x0900,
+    COLOR_BUFFER_BIT: 0x4000,
+    TRIANGLES: 0x0004,
+    createShader: (type: number) => {
+      events.push(`createShader:${type}`);
+      return { type };
+    },
+    shaderSource: (_shader: object, source: string) => {
+      sources.push(source);
+      events.push("shaderSource");
+    },
+    compileShader: () => void events.push("compileShader"),
+    getShaderParameter: () => compiles,
+    getShaderInfoLog: () => "bad shader",
+    createProgram: () => ({}),
+    attachShader: () => void events.push("attachShader"),
+    linkProgram: () => void events.push("linkProgram"),
+    getProgramParameter: () => links,
+    getProgramInfoLog: () => "bad program",
+    getUniformLocation: (_program: object, name: string) => ({ name }),
+    useProgram: () => void events.push("useProgram"),
+    enable: (capability: number) => void events.push(`enable:${capability}`),
+    cullFace: (mode: number) => void events.push(`cullFace:${mode}`),
+    frontFace: (mode: number) => void events.push(`frontFace:${mode}`),
+    clearColor: (r: number, g: number, b: number, a: number) =>
+      void events.push(`clearColor:${r},${g},${b},${a}`),
+    viewport: (x: number, y: number, width: number, height: number) =>
+      void events.push(`viewport:${x},${y},${width},${height}`),
+    clear: (mask: number) => void events.push(`clear:${mask}`),
+    uniform1f: (location: { name: string }, value: number) => {
+      uniforms.set(location.name, value);
+      events.push(`uniform1f:${location.name}`);
+    },
+    drawArrays: (mode: number, first: number, count: number) =>
+      void events.push(`drawArrays:${mode},${first},${count}`),
+  });
+  return { gl, events, sources, uniforms };
 }
 
 /** The values that a fake `navigator.gpu` gives. */

@@ -16,7 +16,10 @@ import type { CanvasDelegate } from "../../types.ts";
  * Only one instance exists. The canvas fills the window. A `ResizeObserver`
  * gives the size of the canvas on the screen in device pixels. It reports a
  * new size when the window changes size, and when the window moves to a screen
- * with a different pixel ratio. The frame loop uses `requestAnimationFrame`,
+ * with a different pixel ratio. The canvas keeps the newest size and applies it
+ * at the start of the next frame, just before the delegate draws. A change of
+ * the size clears the canvas. If it happened after the drawing of a frame, the
+ * page would show a cleared canvas. The frame loop uses `requestAnimationFrame`,
  * so the browser sets the speed of the frames and pauses them when the window
  * is hidden.
  */
@@ -44,6 +47,12 @@ export class Canvas {
 
   /** The object that draws the frames. It is `undefined` until `start` runs. */
   private delegate: CanvasDelegate | undefined;
+
+  /**
+   * The newest size that the observer reported, in device pixels. It is
+   * `undefined` when the surface has this size already.
+   */
+  private pendingSize: { width: number; height: number } | undefined;
 
   /**
    * Take the canvas and keep its drawing surface the same size as its box in
@@ -98,15 +107,37 @@ export class Canvas {
   }
 
   /**
-   * Make the drawing surface as large as the canvas is on the screen.
+   * Keep the newest size of the canvas on the screen. The surface gets this
+   * size at the start of the next frame, not now.
    *
    * @param entries - The size reports from the `ResizeObserver`.
    */
   private resize(entries: readonly ResizeObserverEntry[]): void {
     for (const entry of entries) {
       const [size] = entry.devicePixelContentBoxSize;
-      this.surface.width = Math.max(1, size.inlineSize);
-      this.surface.height = Math.max(1, size.blockSize);
+      this.pendingSize = {
+        width: Math.max(1, size.inlineSize),
+        height: Math.max(1, size.blockSize),
+      };
+    }
+  }
+
+  /**
+   * Give the surface the newest size. A change of the size clears the canvas, so
+   * this must happen just before the delegate draws and not after it. Do
+   * nothing for a size that the surface has already.
+   */
+  private applyPendingSize(): void {
+    const size = this.pendingSize;
+    this.pendingSize = undefined;
+    if (!size) {
+      return;
+    }
+    if (this.surface.width !== size.width) {
+      this.surface.width = size.width;
+    }
+    if (this.surface.height !== size.height) {
+      this.surface.height = size.height;
     }
   }
 
@@ -122,6 +153,7 @@ export class Canvas {
    */
   private tick(time: number): void {
     this.frameRequest = undefined;
+    this.applyPendingSize();
     this.delegate?.canvasDidRequestFrame(time);
     if (this.running) {
       this.requestFrame();

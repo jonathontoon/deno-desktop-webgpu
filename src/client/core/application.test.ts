@@ -48,7 +48,7 @@ Deno.test("Application", async (t) => {
 
     await t.step("the aspect ratio follows the size of the canvas", () => {
       observers.resize(fakeSurface.surface, 900, 300);
-      application.canvasDidRequestFrame(2000);
+      frames.step(2000);
       assertEquals(drawn.at(-1), { time: 2000, aspectRatio: 3 });
     });
 

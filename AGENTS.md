@@ -131,10 +131,14 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 
 ## Project
 
-This is a Deno desktop application. All of its output is WebGPU rendering.
-It uses the `cef` backend. The `cef` backend puts a Chromium web view in the
-native window. The page has one `<canvas>` element. The code in `src/` draws to
-the canvas with WebGPU.
+This is a Deno desktop application. All of its output is 3D rendering.
+It uses the `webview` backend. The `webview` backend puts the web view of the
+operating system in the native window: WKWebView on macOS, WebView2 on Windows,
+and WebKitGTK on Linux. The page has one `<canvas>` element. The code in `src/`
+draws to the canvas.
+
+The oldest macOS that this project supports is macOS 14. The web view has no
+DevTools. WebGPU is not in every web view, so the program must not need it.
 
 The Deno side (`src/app.ts`) opens the window and serves the page. The browser
 side (`src/client/main.ts`) runs in the page and draws.
@@ -169,7 +173,7 @@ When a Deno release has the fix, do these steps:
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`         | Deno settings, tasks, and the `cef` backend.                      |
+| `deno.json`         | Deno settings, tasks, and the `webview` backend.                  |
 
 ## Commands
 
@@ -227,7 +231,7 @@ failed check stops the commit. GitHub runs the same checks on each push
    Always end statements with a semicolon. Always use double quotes for strings.
    The `fmt` and `lint` sections of `deno.json` set these rules.
 3. Do not edit files in `.agents/` or `.claude/skills/` by hand.
-4. Keep `"backend": "cef"` in `deno.json` until the TODO in "Project" is done.
+4. Keep `"backend": "webview"` in `deno.json` until the TODO in "Project" is done.
    The page must have only one `<canvas>`. Do not add other page content.
 5. Keep `"unstable": ["webgpu"]` in `deno.json`. WebGPU needs it.
 6. The frame loop in `Canvas` uses `requestAnimationFrame`. The unit tests use

@@ -1,8 +1,9 @@
 # Deno Desktop WebGPU
 
-A Deno desktop application that draws with WebGPU. It uses the `cef` backend.
-This backend puts a Chromium web view in the native window. The page has one
-canvas, and the code draws to it.
+A Deno desktop application that draws a 3D cube. It uses the `webview` backend.
+This backend puts the web view of the operating system in the native window. The
+page has one canvas, and the code draws to it. The oldest supported macOS is
+macOS 14.
 
 The goal is the `raw` backend, which has no web engine. The `raw` backend does
 not work on macOS now. See the TODO in `AGENTS.md`.
@@ -46,7 +47,7 @@ You need a computer with a GPU that supports WebGPU.
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`  | The unit tests.                                                   |
-| `deno.json`         | Settings. It selects the `cef` backend.                           |
+| `deno.json`         | Settings. It selects the `webview` backend.                       |
 
 ## Agents
 

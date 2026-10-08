@@ -11,8 +11,8 @@ import {
   CLIENT_SCRIPT_PATH,
   DEV_ATTRIBUTE,
   ERROR_ELEMENT_ID,
-  FPS_ELEMENT_ID,
   HTTP_NOT_FOUND,
+  METER_ELEMENT_ID,
   PAGE_PATH,
   STYLES_PATH,
   WINDOW_OPTIONS,
@@ -34,13 +34,13 @@ Deno.test("index.html", async (t) => {
     assertStringIncludes(INDEX_HTML, `id="${BACKEND_ELEMENT_ID}"`);
   });
 
-  await t.step("has the element for the frame rate", () => {
-    assertStringIncludes(INDEX_HTML, `id="${FPS_ELEMENT_ID}"`);
+  await t.step("has the element for the meter", () => {
+    assertStringIncludes(INDEX_HTML, `id="${METER_ELEMENT_ID}"`);
   });
 
   await t.step("hides both elements until development mode shows them", () => {
     assertStringIncludes(INDEX_HTML, `<p id="${BACKEND_ELEMENT_ID}" hidden>`);
-    assertStringIncludes(INDEX_HTML, `<p id="${FPS_ELEMENT_ID}" hidden>`);
+    assertStringIncludes(INDEX_HTML, `<p id="${METER_ELEMENT_ID}" hidden>`);
   });
 
   await t.step("has a <body> tag that the server can mark", () => {
@@ -61,6 +61,15 @@ Deno.test("index.html", async (t) => {
 });
 
 Deno.test("styles.css", async (t) => {
+  await t.step("makes the canvas a square as large as the shorter side", () => {
+    assertStringIncludes(STYLES_CSS, "width: 100vmin;");
+    assertStringIncludes(STYLES_CSS, "height: 100vmin;");
+  });
+
+  await t.step("puts the canvas in the center of the window", () => {
+    assertStringIncludes(STYLES_CSS, "place-items: center;");
+  });
+
   await t.step("has the clear color as the page background", () => {
     const [red, green, blue] = [CLEAR_COLOR.r, CLEAR_COLOR.g, CLEAR_COLOR.b]
       .map((value) => Math.round(value * 255).toString(16).padStart(2, "0"));

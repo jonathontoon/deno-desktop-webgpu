@@ -6,19 +6,18 @@
 import type { Backend } from "../../types.ts";
 import { requestDevice } from "../gpu/graphics.ts";
 import { WebGPU } from "../gpu/webgpu.ts";
-import { WebGL2 } from "../gl/webgl2.ts";
 
 /**
- * Choose the best drawing method that the web view has, and make its backend.
+ * Make the backend that draws on the canvas.
  *
  * @remarks
- * The order is WebGPU, then WebGL2. The function asks for the WebGPU device
- * before it asks the canvas for any context. So the canvas is free for WebGL2
- * when WebGPU is not available.
+ * This is the one place that chooses a backend. A new drawing method is a new
+ * class that implements `Backend`. Add it here, after the ones that look
+ * better, and use it when the one before it fails.
  *
  * @param surface - The canvas that the backend draws to.
  * @returns The backend.
- * @throws {Error} When the web view has neither WebGPU nor WebGL2.
+ * @throws {Error} When the computer has no WebGPU.
  *
  * @example
  * ```typescript
@@ -28,13 +27,5 @@ import { WebGL2 } from "../gl/webgl2.ts";
 export async function selectBackend(
   surface: HTMLCanvasElement,
 ): Promise<Backend> {
-  try {
-    return new WebGPU(await requestDevice(), surface);
-  } catch (webgpuError) {
-    const context = surface.getContext("webgl2");
-    if (context) {
-      return new WebGL2(context, surface);
-    }
-    throw new Error("WebGPU or WebGL2 is required.", { cause: webgpuError });
-  }
+  return new WebGPU(await requestDevice(), surface);
 }

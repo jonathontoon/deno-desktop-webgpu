@@ -50,14 +50,14 @@ export interface PipelineOptions {
 }
 
 /** The drawing method that the program uses to draw on the canvas. */
-export type BackendKind = "webgpu" | "webgl2";
+export type BackendKind = "webgpu";
 
 /**
  * An object that draws the scene on the canvas with one drawing method.
  *
  * @remarks
- * `WebGPU` and `WebGL2` implement this protocol. `Application` does not know
- * which one it has.
+ * `WebGPU` implements this protocol. `Application` does not know which backend
+ * it has, so a new drawing method does not change it.
  */
 export interface Backend {
   /** The drawing method of this backend. */

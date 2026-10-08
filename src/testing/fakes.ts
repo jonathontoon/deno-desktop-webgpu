@@ -175,48 +175,24 @@ const DEFAULT_CANVAS_HEIGHT = 150;
 export interface FakeSurface {
   /** The fake canvas. Give it to the code under test. */
   readonly surface: HTMLCanvasElement;
-  /** The context that `getContext("webgpu")` gives. It is `null` when a test asks. */
+  /** The context that `getContext` gives. It is `null` when a test asks. */
   readonly context: GPUCanvasContext | null;
   /** The arguments of each `configure` call. */
   readonly configurations: GPUCanvasConfiguration[];
   /** The view that the texture of the context gives. */
   readonly view: GPUTextureView;
-  /** The kinds of context that the code under test asked for. */
-  readonly requestedKinds: string[];
-  /**
-   * Set the size of the canvas box on the screen.
-   *
-   * @param width - The width, in CSS pixels.
-   * @param height - The height, in CSS pixels.
-   */
-  setClientSize(width: number, height: number): void;
-}
-
-/** The kinds of context that a fake canvas gives. */
-export interface FakeSurfaceOptions {
-  /** `false` makes `getContext("webgpu")` give `null`. The default is `true`. */
-  readonly webgpu?: boolean;
-  /** The context for `getContext("webgl2")`. The default is `null`. */
-  readonly webgl2?: WebGL2RenderingContext | null;
 }
 
 /**
  * Make a fake canvas.
  *
- * @param options - Which kinds of context the canvas gives. A boolean is the
- * same as `{ webgpu: boolean }`.
+ * @param hasContext - `false` makes `getContext` give `null`.
  * @returns The canvas and the records of its calls.
  */
-export function createFakeSurface(
-  options: boolean | FakeSurfaceOptions = true,
-): FakeSurface {
-  const { webgpu = true, webgl2 = null } = typeof options === "boolean"
-    ? { webgpu: options }
-    : options;
+export function createFakeSurface(hasContext = true): FakeSurface {
   const view = fake<GPUTextureView>({});
   const configurations: GPUCanvasConfiguration[] = [];
-  const requestedKinds: string[] = [];
-  const context = webgpu
+  const context = hasContext
     ? fake<GPUCanvasContext>({
       configure: (configuration: GPUCanvasConfiguration) => {
         configurations.push(configuration);
@@ -228,104 +204,14 @@ export function createFakeSurface(
   const surface = fake<HTMLCanvasElement>({
     width: DEFAULT_CANVAS_WIDTH,
     height: DEFAULT_CANVAS_HEIGHT,
-    clientWidth: 0,
-    clientHeight: 0,
-    getContext: (kind: string) => {
-      requestedKinds.push(kind);
-      if (kind === "webgpu") {
-        return context;
-      }
-      return kind === "webgl2" ? webgl2 : null;
-    },
+    getContext: () => context,
   });
   return {
     surface,
     context,
     configurations,
     view,
-    requestedKinds,
-    setClientSize: (width, height) => {
-      Object.assign(surface, { clientWidth: width, clientHeight: height });
-    },
   };
-}
-
-/** A fake WebGL2 context and the records of the calls that it received. */
-export interface FakeGL {
-  /** The fake context. Give it to the code under test. */
-  readonly gl: WebGL2RenderingContext;
-  /** The names of the calls, in the order that they happened. */
-  readonly events: string[];
-  /** The source code of each shader, in the order of `shaderSource` calls. */
-  readonly sources: string[];
-  /** The last number that `uniform1f` got, by the name of the uniform. */
-  readonly uniforms: Map<string, number>;
-}
-
-/** What a fake WebGL2 context does when a shader or a program is made. */
-export interface FakeGLOptions {
-  /** `false` makes the shaders fail to compile. The default is `true`. */
-  readonly compiles?: boolean;
-  /** `false` makes the program fail to link. The default is `true`. */
-  readonly links?: boolean;
-}
-
-/**
- * Make a fake WebGL2 context.
- *
- * @param options - Whether the shaders compile and the program links.
- * @returns The context and the records of its calls.
- */
-export function createFakeGL(options: FakeGLOptions = {}): FakeGL {
-  const { compiles = true, links = true } = options;
-  const events: string[] = [];
-  const sources: string[] = [];
-  const uniforms = new Map<string, number>();
-
-  const gl = fake<WebGL2RenderingContext>({
-    VERTEX_SHADER: 0x8B31,
-    FRAGMENT_SHADER: 0x8B30,
-    COMPILE_STATUS: 0x8B81,
-    LINK_STATUS: 0x8B82,
-    CULL_FACE: 0x0B44,
-    BACK: 0x0405,
-    CW: 0x0900,
-    COLOR_BUFFER_BIT: 0x4000,
-    TRIANGLES: 0x0004,
-    createShader: (type: number) => {
-      events.push(`createShader:${type}`);
-      return { type };
-    },
-    shaderSource: (_shader: object, source: string) => {
-      sources.push(source);
-      events.push("shaderSource");
-    },
-    compileShader: () => void events.push("compileShader"),
-    getShaderParameter: () => compiles,
-    getShaderInfoLog: () => "bad shader",
-    createProgram: () => ({}),
-    attachShader: () => void events.push("attachShader"),
-    linkProgram: () => void events.push("linkProgram"),
-    getProgramParameter: () => links,
-    getProgramInfoLog: () => "bad program",
-    getUniformLocation: (_program: object, name: string) => ({ name }),
-    useProgram: () => void events.push("useProgram"),
-    enable: (capability: number) => void events.push(`enable:${capability}`),
-    cullFace: (mode: number) => void events.push(`cullFace:${mode}`),
-    frontFace: (mode: number) => void events.push(`frontFace:${mode}`),
-    clearColor: (r: number, g: number, b: number, a: number) =>
-      void events.push(`clearColor:${r},${g},${b},${a}`),
-    viewport: (x: number, y: number, width: number, height: number) =>
-      void events.push(`viewport:${x},${y},${width},${height}`),
-    clear: (mask: number) => void events.push(`clear:${mask}`),
-    uniform1f: (location: { name: string }, value: number) => {
-      uniforms.set(location.name, value);
-      events.push(`uniform1f:${location.name}`);
-    },
-    drawArrays: (mode: number, first: number, count: number) =>
-      void events.push(`drawArrays:${mode},${first},${count}`),
-  });
-  return { gl, events, sources, uniforms };
 }
 
 /** The values that a fake `navigator.gpu` gives. */
@@ -389,15 +275,6 @@ export interface FakeResizeObservers {
    * @param height - The new height, in device pixels.
    */
   resize(target: Element, width: number, height: number): void;
-  /**
-   * Send a size report that has only the box in CSS pixels. This is what a web
-   * view without the device pixel box gives.
-   *
-   * @param target - The element that changed size.
-   * @param width - The new width, in CSS pixels.
-   * @param height - The new height, in CSS pixels.
-   */
-  resizeContent(target: Element, width: number, height: number): void;
   /** Put the original `ResizeObserver` back. */
   restore(): void;
 }
@@ -405,14 +282,10 @@ export interface FakeResizeObservers {
 /**
  * Replace `ResizeObserver` with a fake that a test can drive.
  *
- * @param supportsDevicePixelBox - `false` makes `observe` throw a `TypeError`
- * for the device pixel box, as WebKit does.
- * @returns The records of the calls, the `resize` functions, and a `restore`
+ * @returns The records of the calls, a `resize` function, and a `restore`
  * function.
  */
-export function installFakeResizeObserver(
-  supportsDevicePixelBox = true,
-): FakeResizeObservers {
+export function installFakeResizeObserver(): FakeResizeObservers {
   const options = new Map<Element, ResizeObserverOptions | undefined>();
   const callbacks = new Map<Element, ResizeObserverCallback[]>();
 
@@ -436,12 +309,6 @@ export function installFakeResizeObserver(
      * @param observeOptions - The box to watch.
      */
     public observe(target: Element, observeOptions?: ResizeObserverOptions) {
-      if (
-        !supportsDevicePixelBox &&
-        observeOptions?.box === "device-pixel-content-box"
-      ) {
-        throw new TypeError("Type error");
-      }
       options.set(target, observeOptions);
       callbacks.set(target, [...(callbacks.get(target) ?? []), this.callback]);
     }
@@ -470,12 +337,6 @@ export function installFakeResizeObserver(
     resize: (target, width, height) => {
       send(target, {
         devicePixelContentBoxSize: [{ inlineSize: width, blockSize: height }],
-        contentBoxSize: [{ inlineSize: width, blockSize: height }],
-      });
-    },
-    resizeContent: (target, width, height) => {
-      send(target, {
-        contentBoxSize: [{ inlineSize: width, blockSize: height }],
       });
     },
     restore: () => {
@@ -548,82 +409,6 @@ export function installFakeAnimationFrames(): FakeAnimationFrames {
           delete target[name];
         }
       });
-    },
-  };
-}
-
-/**
- * Replace `devicePixelRatio` with a fixed value.
- *
- * @param ratio - The number of device pixels in one CSS pixel.
- * @returns A function that puts the original value back.
- */
-export function installFakeDevicePixelRatio(ratio: number): () => void {
-  const original = Object.getOwnPropertyDescriptor(
-    globalThis,
-    "devicePixelRatio",
-  );
-  Object.defineProperty(globalThis, "devicePixelRatio", {
-    configurable: true,
-    writable: true,
-    value: ratio,
-  });
-  return () => {
-    if (original) {
-      Object.defineProperty(globalThis, "devicePixelRatio", original);
-    } else {
-      delete (globalThis as unknown as Record<string, unknown>)
-        .devicePixelRatio;
-    }
-  };
-}
-
-/** The fake `matchMedia` function and the records of its calls. */
-export interface FakeMatchMedia {
-  /** The text of each media query that the code under test asked for. */
-  readonly queries: string[];
-  /** Send a `change` event to each listener that waits for one. */
-  change(): void;
-  /** Put the original function back. */
-  restore(): void;
-}
-
-/**
- * Replace `matchMedia` with a fake that a test can drive.
- *
- * @returns The records of the calls, a `change` function, and a `restore`
- * function.
- */
-export function installFakeMatchMedia(): FakeMatchMedia {
-  const queries: string[] = [];
-  let listeners: Array<() => void> = [];
-  const original = Object.getOwnPropertyDescriptor(globalThis, "matchMedia");
-  Object.defineProperty(globalThis, "matchMedia", {
-    configurable: true,
-    writable: true,
-    value: (query: string) => {
-      queries.push(query);
-      return {
-        addEventListener: (_type: string, listener: () => void) => {
-          listeners.push(listener);
-        },
-      };
-    },
-  });
-  return {
-    queries,
-    change: () => {
-      // The code under test listens one time, so each listener runs once.
-      const waiting = listeners;
-      listeners = [];
-      waiting.forEach((listener) => listener());
-    },
-    restore: () => {
-      if (original) {
-        Object.defineProperty(globalThis, "matchMedia", original);
-      } else {
-        delete (globalThis as unknown as Record<string, unknown>).matchMedia;
-      }
     },
   };
 }

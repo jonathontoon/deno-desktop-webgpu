@@ -19,7 +19,7 @@ export const WINDOW_OPTIONS = {
 export const CANVAS_ALPHA_MODE: GPUCanvasAlphaMode = "opaque";
 
 /** The color that fills the window before each frame. Each value is from 0 to 1. */
-export const CLEAR_COLOR: GPUColorDict = { r: 0.05, g: 0.05, b: 0.1, a: 1 };
+export const CLEAR_COLOR: GPUColorDict = { r: 0, g: 0, b: 0, a: 1 };
 
 /** The name of the vertex function in each shader file. */
 export const VERTEX_ENTRY_POINT = "vertexMain";
@@ -42,11 +42,14 @@ export const ERROR_ELEMENT_ID = "error";
 /** The `id` of the element that shows the name of the drawing method. */
 export const BACKEND_ELEMENT_ID = "backend";
 
-/** The `id` of the element that shows the number of frames each second. */
-export const FPS_ELEMENT_ID = "fps";
+/** The `id` of the element that shows the numbers of the meter. */
+export const METER_ELEMENT_ID = "meter";
 
-/** How long the meter counts frames before it shows a number, in milliseconds. */
-export const FPS_INTERVAL_MS = 500;
+/** How often the meter counts a timer tick, in milliseconds. */
+export const METER_TICK_MS = 100;
+
+/** How often the meter shows the numbers, in milliseconds. */
+export const METER_INTERVAL_MS = 1000;
 
 /** The argument that `deno task dev` gives to the app to turn on development mode. */
 export const DEV_ARGUMENT = "dev";
@@ -101,11 +104,6 @@ export const HTTP_NOT_FOUND = 404;
 /** The box that the `ResizeObserver` of the canvas watches: device pixels. */
 export const CANVAS_OBSERVED_BOX: ResizeObserverOptions = {
   box: "device-pixel-content-box",
-};
-
-/** The box that the `ResizeObserver` watches when the web view has no device pixel box: CSS pixels. */
-export const CANVAS_OBSERVED_BOX_FALLBACK: ResizeObserverOptions = {
-  box: "content-box",
 };
 
 /** How far the triangle moves to the right, in screen units. A negative value moves it to the left. */

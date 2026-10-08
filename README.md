@@ -1,14 +1,14 @@
 # Deno Desktop WebGPU
 
-A Deno desktop application that draws a 3D cube. It uses the `webview` backend.
-This backend puts the web view of the operating system in the native window. The
-page has one canvas, and the code draws to it. The oldest supported macOS is
-macOS 14.
+A Deno desktop application that draws a 3D cube. It uses the `cef` backend.
+This backend puts a Chromium web view in the native window. The page has one
+canvas, and the code draws to it.
 
-The program draws with WebGPU when the web view has it. If not, it draws with
-WebGL2. With `deno task dev`, the page also shows the name of the drawing method
-in the lower left corner and the number of frames each second in the lower right
-corner. A built app does not show them.
+The program draws with WebGPU. With `deno task dev`, the page also shows the
+name of the drawing method in the lower left corner. In the upper left corner it
+shows the number of animation frames and timer ticks each second, the number of
+size reports, the longest waits between two frames and between two ticks, and
+the size of the canvas. A built app does not show them.
 
 The goal is the `raw` backend, which has no web engine. The `raw` backend does
 not work on macOS now. See the TODO in `AGENTS.md`.
@@ -50,11 +50,10 @@ You need a computer with a GPU that supports WebGPU.
 |                     | files `index.html` and `styles.css`, and these folders:           |
 | `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, and `selectBackend`.   |
 | `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
-| `src/client/gl/`    | The WebGL2 backend: `WebGL2` and the `.glsl` shaders.             |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`  | The unit tests.                                                   |
-| `deno.json`         | Settings. It selects the `webview` backend.                       |
+| `deno.json`         | Settings. It selects the `cef` backend.                           |
 
 ## Agents
 

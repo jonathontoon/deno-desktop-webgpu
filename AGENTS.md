@@ -132,31 +132,31 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 ## Project
 
 This is a Deno desktop application. All of its output is 3D rendering.
-It uses the `webview` backend. The `webview` backend puts the web view of the
-operating system in the native window: WKWebView on macOS, WebView2 on Windows,
-and WebKitGTK on Linux. The page has one `<canvas>` element. The code in `src/`
-draws to the canvas.
+It uses the `cef` backend. The `cef` backend puts a Chromium web view in the
+native window. The page has one `<canvas>` element. The code in `src/` draws to
+the canvas.
 
-The oldest macOS that this project supports is macOS 14. The web view has no
-DevTools. In development mode, the page shows the name of the drawing method
-and the number of frames each second. `deno task dev` gives the argument `dev`
-to the app, and the server then adds the attribute `data-development` to the
-`<body>` of the page. A built app does not get the argument, so the page does
-not show these two numbers.
+The `webview` backend (the web view of the operating system) is not used. On
+macOS, WKWebView pauses page rendering while the user resizes the window.
+Chromium gives the same WebGPU support on every operating system. The price is a
+larger app.
 
-WebGPU is not in every web view: macOS 14 and 15 and WebKitGTK on Linux do not
-have it. So the program has two drawing methods, and it uses the first one that
-works:
+In development mode, the page shows the name of the drawing method and the
+numbers of the `Meter`: the animation frames and timer ticks each second, the
+size reports, the longest waits, and the size of the canvas. `deno task dev`
+gives the argument `dev` to the app, and the server then adds the attribute
+`data-development` to the `<body>` of the page. A built app does not get the
+argument, so the page does not show these things.
 
-1. WebGPU (`WebGPU` in `src/client/gpu/`).
-2. WebGL2 (`WebGL2` in `src/client/gl/`).
+The program draws with WebGPU (`WebGPU` in `src/client/gpu/`). WebGPU needs a
+GPU and a driver that support it. If the computer has none, `Alert` shows an
+error. `WebGPU` implements the `Backend` protocol, and `selectBackend` in
+`src/client/core/backend.ts` makes the backend. `Application` does not know
+which backend it has.
 
-Each one implements the `Backend` protocol. `selectBackend` in
-`src/client/core/backend.ts` chooses the backend. If both fail, `Alert` shows an
-error. WebKit also has no `devicePixelContentBoxSize`, so `Canvas` falls back to
-the size in CSS pixels times `devicePixelRatio`. In that case it also measures
-again when the pixel ratio changes, for example when the window moves to another
-screen.
+`Canvas` reads the size of the canvas in device pixels from a `ResizeObserver`
+with the box `device-pixel-content-box`. Chromium supports this box. A web view
+that does not support it, such as WebKit, is not supported.
 
 The Deno side (`src/app.ts`) opens the window and serves the page. The browser
 side (`src/client/main.ts`) runs in the page and draws.
@@ -189,11 +189,10 @@ When a Deno release has the fix, do these steps:
 |                     | files `index.html` and `styles.css`, and these folders:           |
 | `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, and `selectBackend`.   |
 | `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
-| `src/client/gl/`    | The WebGL2 backend: `WebGL2` and the `.glsl` shaders.             |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`         | Deno settings, tasks, and the `webview` backend.                  |
+| `deno.json`         | Deno settings, tasks, and the `cef` backend.                      |
 
 ## Commands
 
@@ -251,7 +250,7 @@ failed check stops the commit. GitHub runs the same checks on each push
    Always end statements with a semicolon. Always use double quotes for strings.
    The `fmt` and `lint` sections of `deno.json` set these rules.
 3. Do not edit files in `.agents/` or `.claude/skills/` by hand.
-4. Keep `"backend": "webview"` in `deno.json` until the TODO in "Project" is done.
+4. Keep `"backend": "cef"` in `deno.json` until the TODO in "Project" is done.
    The page must have only one `<canvas>`. Do not add other page content.
 5. Keep `"unstable": ["webgpu"]` in `deno.json`. WebGPU needs it.
 6. The frame loop in `Canvas` uses `requestAnimationFrame`. The unit tests use
@@ -259,12 +258,8 @@ failed check stops the commit. GitHub runs the same checks on each push
 7. Keep all code in `src/`. The entry point is `src/app.ts`. Do not add a root `main.ts`.
    The browser code is bundled to `dist/client.js` by `deno task bundle`. Do
    not commit `dist/`.
-8. Write shader code in `.wgsl` files (WebGPU) and `.glsl` files (WebGL2) in
-   `src/`. Import them as text:
+8. Write shader code in `.wgsl` files in `src/`. Import them as text:
    `import CODE from "./file.wgsl" with { type: "text" };`
-   Do not put shader code in `.ts` files. The `.glsl` cube shader and
-   `cube.wgsl` must have the same numbers and the same corner table. The test
-   `src/client/gl/shaders.test.ts` checks this.
+   Do not put shader code in `.ts` files.
 9. A new drawing method is a new class that implements `Backend`. Add it to
-   `selectBackend` after the ones that look better. Do not let `Application`
-   know which backend it has.
+   `selectBackend`. Do not let `Application` know which backend it has.

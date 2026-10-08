@@ -8,7 +8,6 @@ import type { CanvasDelegate } from "../../types.ts";
 import {
   createFakeSurface,
   installFakeAnimationFrames,
-  installFakeMatchMedia,
   installFakeResizeObserver,
 } from "../../testing/fakes.ts";
 import { Canvas } from "./canvas.ts";
@@ -36,7 +35,6 @@ Deno.test("Canvas", async (t) => {
   });
 
   const observers = installFakeResizeObserver();
-  const media = installFakeMatchMedia();
   const frames = installFakeAnimationFrames();
   const fake = createFakeSurface();
   const canvas = new Canvas(fake.surface);
@@ -55,10 +53,6 @@ Deno.test("Canvas", async (t) => {
       Error,
       "Canvas exists already.",
     );
-  });
-
-  await t.step("the constructor does not wait for a pixel ratio change", () => {
-    assertEquals(media.queries, []);
   });
 
   await t.step("the constructor watches the box in device pixels", () => {
@@ -164,7 +158,6 @@ Deno.test("Canvas", async (t) => {
     canvas.stop();
   });
 
-  media.restore();
   observers.restore();
   frames.restore();
 });

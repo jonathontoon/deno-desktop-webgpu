@@ -4,8 +4,14 @@
  * @module
  */
 import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
-import { FPS_INTERVAL_MS } from "../../constants.ts";
-import { fake } from "../../testing/fakes.ts";
+import { FakeTime } from "@std/testing/time";
+import { METER_INTERVAL_MS, METER_TICK_MS } from "../../constants.ts";
+import {
+  createFakeSurface,
+  fake,
+  installFakeAnimationFrames,
+  installFakeResizeObserver,
+} from "../../testing/fakes.ts";
 import { Meter } from "./meter.ts";
 
 Deno.test("Meter", async (t) => {
@@ -14,14 +20,8 @@ Deno.test("Meter", async (t) => {
   });
 
   const target = fake<HTMLElement>({ textContent: "" });
-  const meter = new Meter(target);
-
-  /** Send frames to the meter every `step` milliseconds, from `from` to `to`. */
-  const run = (from: number, to: number, step: number): void => {
-    for (let time = from; time <= to; time += step) {
-      meter.record(time);
-    }
-  };
+  const fakeSurface = createFakeSurface();
+  const meter = new Meter(target, fakeSurface.surface);
 
   await t.step("shared gives the instance", () => {
     assertStrictEquals(Meter.shared, meter);
@@ -29,32 +29,100 @@ Deno.test("Meter", async (t) => {
 
   await t.step("a second Meter fails", () => {
     assertThrows(
-      () => new Meter(fake<HTMLElement>({ textContent: "" })),
+      () => new Meter(target, createFakeSurface().surface),
       Error,
       "Meter exists already.",
     );
   });
 
-  await t.step("the element is empty before the first interval ends", () => {
-    meter.record(1000);
-    run(1010, 1490, 10);
-    assertEquals(target.textContent, "");
-  });
+  const frames = installFakeAnimationFrames();
+  const observers = installFakeResizeObserver();
+  using time = new FakeTime();
+  try {
+    meter.start();
 
-  await t.step("it shows 100 FPS for a frame every 10 milliseconds", () => {
-    meter.record(1000 + FPS_INTERVAL_MS);
-    assertEquals(target.textContent, "100 FPS");
-  });
+    /** Let one interval of the meter pass, in steps of one tick. */
+    const passInterval = async (): Promise<void> => {
+      for (
+        let passed = 0;
+        passed < METER_INTERVAL_MS;
+        passed += METER_TICK_MS
+      ) {
+        await time.tickAsync(METER_TICK_MS);
+      }
+    };
 
-  await t.step("it starts a new interval after it shows the number", () => {
-    const start = 1000 + FPS_INTERVAL_MS;
-    run(start + 20, start + FPS_INTERVAL_MS, 20);
-    assertEquals(target.textContent, "50 FPS");
-  });
+    await t.step("it shows nothing before the first interval ends", () => {
+      assertEquals(target.textContent, "");
+    });
 
-  await t.step("it rounds the number to a whole number", () => {
-    // 4 frames in 600 milliseconds is 6.67 frames each second.
-    run(2150, 2600, 150);
-    assertEquals(target.textContent, "7 FPS");
-  });
+    await t.step(
+      "it counts the frames and the ticks of the interval",
+      async () => {
+        frames.step(1000);
+        frames.step(1016);
+        frames.step(1033);
+        await passInterval();
+        const lines = String(target.textContent).split("\n");
+        assertEquals(lines[0], "frames/s 3");
+        assertEquals(lines[1], "ticks/s 10 (10 is normal)");
+      },
+    );
+
+    await t.step(
+      "it starts to count again after it shows the numbers",
+      async () => {
+        frames.step(1050);
+        await passInterval();
+        assertEquals(String(target.textContent).split("\n")[0], "frames/s 1");
+      },
+    );
+
+    await t.step("it keeps the longest wait between two frames", async () => {
+      frames.step(1550);
+      frames.step(1566);
+      await passInterval();
+      assertEquals(
+        String(target.textContent).split("\n")[3],
+        "worst frame gap 500 ms",
+      );
+    });
+
+    await t.step("the longest wait does not become smaller", async () => {
+      frames.step(1582);
+      await passInterval();
+      assertEquals(
+        String(target.textContent).split("\n")[3],
+        "worst frame gap 500 ms",
+      );
+    });
+
+    await t.step("it keeps the longest wait between two ticks", async () => {
+      await passInterval();
+      assertEquals(
+        String(target.textContent).split("\n")[4],
+        `worst tick gap ${METER_TICK_MS} ms`,
+      );
+    });
+
+    await t.step("it counts the size reports", async () => {
+      observers.resize(fakeSurface.surface, 800, 600);
+      observers.resize(fakeSurface.surface, 810, 600);
+      await passInterval();
+      assertEquals(String(target.textContent).split("\n")[2], "size reports 2");
+    });
+
+    await t.step("it shows the size of the canvas", async () => {
+      fakeSurface.surface.width = 1600;
+      fakeSurface.surface.height = 1200;
+      await passInterval();
+      assertEquals(
+        String(target.textContent).split("\n")[5],
+        "canvas 1600x1200",
+      );
+    });
+  } finally {
+    observers.restore();
+    frames.restore();
+  }
 });

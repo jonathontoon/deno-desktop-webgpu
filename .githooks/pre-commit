@@ -1,0 +1,16 @@
+#!/bin/sh
+# Run all checks before a commit. The commit fails if one check fails.
+# The checks are: format, lint, types, JSDoc, and unit tests.
+# See "Tests and checks" in AGENTS.md.
+
+if ! command -v deno >/dev/null 2>&1; then
+  echo "pre-commit: Deno is not installed. Install Deno 2.9 or later." >&2
+  exit 1
+fi
+
+echo "pre-commit: running 'deno task verify'..." >&2
+if ! deno task verify; then
+  echo "pre-commit: a check failed. The commit did not happen." >&2
+  echo "Fix the problem. Run 'deno task fix' for format and lint fixes." >&2
+  exit 1
+fi

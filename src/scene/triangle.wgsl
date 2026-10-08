@@ -2,7 +2,7 @@
 
 struct Uniforms {
   angle: f32,
-  aspect: f32,
+  aspectRatio: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -31,7 +31,7 @@ fn vertexMain(@builtin(vertex_index) index: u32) -> VertexOutput {
   let rotated = vec2f(p.x * c - p.y * s, p.x * s + p.y * c);
 
   var out: VertexOutput;
-  out.position = vec4f(rotated.x / uniforms.aspect, rotated.y, 0.0, 1.0);
+  out.position = vec4f(rotated.x / uniforms.aspectRatio, rotated.y, 0.0, 1.0);
   out.color = colors[index];
   return out;
 }

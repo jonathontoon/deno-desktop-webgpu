@@ -16,7 +16,7 @@
   },
   "tasks": {
     "bundle": "deno bundle --platform browser --format esm --output dist/client.js src/client/main.ts",
-    "dev": "deno task bundle && (deno bundle --watch --platform browser --format esm --output dist/client.js src/client/main.ts & deno desktop --hmr src/app.ts)",
+    "dev": "deno task bundle && (deno bundle --watch --platform browser --format esm --output dist/client.js src/client/main.ts & deno desktop --hmr src/app.ts dev)",
     "build": "deno task bundle && deno desktop -o dist/deno-desktop-webgpu src/app.ts",
     "check": "deno task bundle && deno check --desktop src/app.ts \"src/**/*.test.ts\"",
     "lint": "deno lint",

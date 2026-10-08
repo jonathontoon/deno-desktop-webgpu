@@ -48,6 +48,12 @@ export const FPS_ELEMENT_ID = "fps";
 /** How long the meter counts frames before it shows a number, in milliseconds. */
 export const FPS_INTERVAL_MS = 500;
 
+/** The argument that `deno task dev` gives to the app to turn on development mode. */
+export const DEV_ARGUMENT = "dev";
+
+/** The attribute that the server adds to the `<body>` of the page in development mode. */
+export const DEV_ATTRIBUTE = "data-development";
+
 /** The path of the web page. */
 export const PAGE_PATH = "/";
 

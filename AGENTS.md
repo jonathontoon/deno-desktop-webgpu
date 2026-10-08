@@ -138,8 +138,11 @@ and WebKitGTK on Linux. The page has one `<canvas>` element. The code in `src/`
 draws to the canvas.
 
 The oldest macOS that this project supports is macOS 14. The web view has no
-DevTools. The page shows the name of the drawing method in the `backend`
-element, so you can see which one runs.
+DevTools. In development mode, the page shows the name of the drawing method
+and the number of frames each second. `deno task dev` gives the argument `dev`
+to the app, and the server then adds the attribute `data-development` to the
+`<body>` of the page. A built app does not get the argument, so the page does
+not show these two numbers.
 
 WebGPU is not in every web view: macOS 14 and 15 and WebKitGTK on Linux do not
 have it. So the program has two drawing methods, and it uses the first one that

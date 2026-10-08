@@ -9,6 +9,7 @@ import {
   CANVAS_ELEMENT_ID,
   CLEAR_COLOR,
   CLIENT_SCRIPT_PATH,
+  DEV_ATTRIBUTE,
   ERROR_ELEMENT_ID,
   FPS_ELEMENT_ID,
   HTTP_NOT_FOUND,
@@ -35,6 +36,15 @@ Deno.test("index.html", async (t) => {
 
   await t.step("has the element for the frame rate", () => {
     assertStringIncludes(INDEX_HTML, `id="${FPS_ELEMENT_ID}"`);
+  });
+
+  await t.step("hides both elements until development mode shows them", () => {
+    assertStringIncludes(INDEX_HTML, `<p id="${BACKEND_ELEMENT_ID}" hidden>`);
+    assertStringIncludes(INDEX_HTML, `<p id="${FPS_ELEMENT_ID}" hidden>`);
+  });
+
+  await t.step("has a <body> tag that the server can mark", () => {
+    assertStringIncludes(INDEX_HTML, "<body>");
   });
 
   await t.step("loads the client script", () => {
@@ -72,6 +82,18 @@ Deno.test("createRequestHandler", async (t) => {
       "text/html",
     );
     assertEquals(await response.text(), INDEX_HTML);
+  });
+
+  await t.step("does not mark the page as development mode", async () => {
+    const page = await get(PAGE_PATH).text();
+    assertEquals(page.includes(DEV_ATTRIBUTE), false);
+  });
+
+  await t.step("marks the page as development mode when asked", async () => {
+    const development = createRequestHandler("console.log(1);", true);
+    const page = await development(new Request("http://localhost/")).text();
+    assertStringIncludes(page, `<body ${DEV_ATTRIBUTE}>`);
+    assertEquals(page, INDEX_HTML.replace("<body>", `<body ${DEV_ATTRIBUTE}>`));
   });
 
   await t.step("answers the style sheet path with CSS", async () => {

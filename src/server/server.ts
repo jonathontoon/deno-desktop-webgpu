@@ -7,6 +7,7 @@
 import {
   CLIENT_SCRIPT_PATH,
   CSS_CONTENT_TYPE,
+  DEV_ATTRIBUTE,
   HTML_CONTENT_TYPE,
   HTTP_NOT_FOUND,
   PAGE_PATH,
@@ -28,18 +29,27 @@ interface PageFile {
  * Make the handler that answers the requests of the window.
  *
  * @param clientScript - The JavaScript text that the page loads.
+ * @param development - `true` in development mode. The page then has the
+ * attribute `data-development` on its `<body>`, and it shows the name of the
+ * drawing method and the frame rate.
  * @returns A handler for `Deno.serve`.
  *
  * @example
  * ```typescript
- * Deno.serve(createRequestHandler(script));
+ * Deno.serve(createRequestHandler(script, true));
  * ```
  */
 export function createRequestHandler(
   clientScript: string,
+  development = false,
 ): (request: Request) => Response {
   const files = new Map<string, PageFile>([
-    [PAGE_PATH, { body: INDEX_HTML, contentType: HTML_CONTENT_TYPE }],
+    [PAGE_PATH, {
+      body: development
+        ? INDEX_HTML.replace("<body>", `<body ${DEV_ATTRIBUTE}>`)
+        : INDEX_HTML,
+      contentType: HTML_CONTENT_TYPE,
+    }],
     [STYLES_PATH, { body: STYLES_CSS, contentType: CSS_CONTENT_TYPE }],
     [
       CLIENT_SCRIPT_PATH,

@@ -6,7 +6,9 @@ page has one canvas, and the code draws to it. The oldest supported macOS is
 macOS 14.
 
 The program draws with WebGPU when the web view has it. If not, it draws with
-WebGL2. The page shows the name of the drawing method in the lower left corner.
+WebGL2. With `deno task dev`, the page also shows the name of the drawing method
+in the lower left corner and the number of frames each second in the lower right
+corner. A built app does not show them.
 
 The goal is the `raw` backend, which has no web engine. The `raw` backend does
 not work on macOS now. See the TODO in `AGENTS.md`.

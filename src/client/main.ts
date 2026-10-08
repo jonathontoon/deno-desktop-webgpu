@@ -1,13 +1,15 @@
 /**
  * Entry point of the web page. The page loads it as a script. It finds the
  * canvas, chooses the drawing method, and runs the render loop. If the start
- * fails, it shows the error in the page.
+ * fails, it shows the error in the page. In development mode, it also shows the
+ * name of the drawing method and the frame rate.
  *
  * @module
  */
 import {
   BACKEND_ELEMENT_ID,
   CANVAS_ELEMENT_ID,
+  DEV_ATTRIBUTE,
   ERROR_ELEMENT_ID,
   FPS_ELEMENT_ID,
 } from "../constants.ts";
@@ -28,12 +30,20 @@ if (!(canvas instanceof HTMLCanvasElement) || !message || !label || !rate) {
 
 const errorAlert = new Alert(message);
 
-/** Choose the drawing method, show its name, and start to draw. */
+/**
+ * Choose the drawing method and start to draw. In development mode, also show
+ * the name of the drawing method and the frame rate.
+ */
 async function main(): Promise<void> {
   const backend = await selectBackend(canvas as HTMLCanvasElement);
-  label!.textContent = backend.kind;
-  new Application(canvas as HTMLCanvasElement, backend, new Meter(rate!))
-    .start();
+  let meter: Meter | undefined;
+  if (document.body.hasAttribute(DEV_ATTRIBUTE)) {
+    label!.textContent = backend.kind;
+    label!.hidden = false;
+    rate!.hidden = false;
+    meter = new Meter(rate!);
+  }
+  new Application(canvas as HTMLCanvasElement, backend, meter).start();
 }
 
 main().catch((error) => errorAlert.show(error));

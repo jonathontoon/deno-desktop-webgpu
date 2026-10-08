@@ -13,7 +13,7 @@ import type { Meter } from "./meter.ts";
  *
  * @remarks
  * Only one instance exists. It makes the `Canvas`, counts each frame with the
- * `Meter`, and gives each frame request to the backend.
+ * `Meter` if it has one, and gives each frame request to the backend.
  */
 export class Application implements CanvasDelegate {
   /** Keeps the one instance. */
@@ -37,7 +37,7 @@ export class Application implements CanvasDelegate {
    *
    * @param element - The canvas element of the page.
    * @param backend - The object that draws each frame on the canvas.
-   * @param meter - The object that counts the frames.
+   * @param meter - The object that counts the frames. It is optional.
    * @throws {Error} When an `Application` exists already.
    *
    * @example
@@ -50,8 +50,8 @@ export class Application implements CanvasDelegate {
     element: HTMLCanvasElement,
     /** The object that draws each frame on the canvas. */
     private readonly backend: Backend,
-    /** The object that counts the frames. */
-    private readonly meter: Meter,
+    /** The object that counts the frames. It is optional. */
+    private readonly meter?: Meter,
   ) {
     Application.holder.assertEmpty();
     this.canvas = new Canvas(element);
@@ -69,7 +69,7 @@ export class Application implements CanvasDelegate {
    * @param time - The time, in milliseconds.
    */
   public canvasDidRequestFrame(time: number): void {
-    this.meter.record(time);
+    this.meter?.record(time);
     this.backend.render({ time, aspectRatio: this.canvas.aspectRatio });
   }
 }

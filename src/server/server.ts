@@ -13,10 +13,12 @@ import {
   HTTP_NOT_FOUND,
   INDEX_HTML_SOURCE,
   PAGE_PATH,
+  PAGE_SOURCES,
   SCRIPT_CONTENT_TYPE,
   STYLES_PATH,
   STYLES_SOURCE,
   TEXT_CONTENT_TYPE,
+  VERSION_ATTRIBUTE,
   VERSION_PATH,
 } from "../constants.ts";
 import type { DiskFiles } from "../types.ts";
@@ -37,8 +39,10 @@ interface PageFile {
  * @remarks
  * In development mode the server reads the page files from the disk for each
  * request, and it answers `/version` with a text that changes when one of the
- * files changes. The page uses this text to load itself again. The page also
- * has the attribute `data-development` on its `<body>`, and it shows the meter.
+ * files changes. The `<body>` of the page has the attribute `data-development`
+ * and the attribute `data-version` with the version at the time of the request.
+ * The page shows the meter, and it loads itself again when `/version` is not
+ * the version that it has.
  *
  * @param clientScript - The JavaScript text that the page loads.
  * @param disk - The files on the disk. Give it only in development mode.
@@ -53,12 +57,16 @@ export function createRequestHandler(
   clientScript: string,
   disk?: DiskFiles,
 ): (request: Request) => Promise<Response> {
+  // The page gets the version before the server reads the files. If a file
+  // changes after that, the version differs, and the page loads itself again.
   const html = disk
-    ? async () =>
-      (await disk.read(INDEX_HTML_SOURCE)).replace(
+    ? async () => {
+      const version = await disk.stamp(PAGE_SOURCES);
+      return (await disk.read(INDEX_HTML_SOURCE)).replace(
         "<body>",
-        `<body ${DEV_ATTRIBUTE}>`,
-      )
+        `<body ${DEV_ATTRIBUTE} ${VERSION_ATTRIBUTE}="${version}">`,
+      );
+    }
     : () => INDEX_HTML;
   const files = new Map<string, PageFile>([
     [PAGE_PATH, { read: html, contentType: HTML_CONTENT_TYPE }],
@@ -73,8 +81,7 @@ export function createRequestHandler(
   ]);
   if (disk) {
     files.set(VERSION_PATH, {
-      read: () =>
-        disk.stamp([INDEX_HTML_SOURCE, STYLES_SOURCE, CLIENT_SCRIPT_SOURCE]),
+      read: () => disk.stamp(PAGE_SOURCES),
       contentType: TEXT_CONTENT_TYPE,
     });
   }

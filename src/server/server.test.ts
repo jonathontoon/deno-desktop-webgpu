@@ -15,8 +15,10 @@ import {
   INDEX_HTML_SOURCE,
   METER_ELEMENT_ID,
   PAGE_PATH,
+  PAGE_SOURCES,
   STYLES_PATH,
   STYLES_SOURCE,
+  VERSION_ATTRIBUTE,
   VERSION_PATH,
   WINDOW_OPTIONS,
 } from "../constants.ts";
@@ -147,12 +149,19 @@ Deno.test("createRequestHandler", async (t) => {
   };
   let stamp = "1";
   const reads: string[] = [];
+  const stamps: Array<readonly string[]> = [];
+  const events: string[] = [];
   const disk: DiskFiles = {
     read: (path) => {
       reads.push(path);
+      events.push(`read ${path}`);
       return Promise.resolve(contents[path]);
     },
-    stamp: () => Promise.resolve(stamp),
+    stamp: (paths) => {
+      stamps.push(paths);
+      events.push("stamp");
+      return Promise.resolve(stamp);
+    },
   };
   const development = createRequestHandler("console.log(1);", disk);
   const getDevelopment = (path: string): Promise<Response> =>
@@ -164,8 +173,36 @@ Deno.test("createRequestHandler", async (t) => {
       const page = await (await getDevelopment(PAGE_PATH)).text();
       assertEquals(
         page,
-        `<html><body ${DEV_ATTRIBUTE}>disk page</body></html>`,
+        `<html><body ${DEV_ATTRIBUTE} ${VERSION_ATTRIBUTE}="1">disk page</body></html>`,
       );
+    },
+  );
+
+  await t.step(
+    "development: gives the page the version of the files",
+    async () => {
+      stamp = "7,8,9";
+      const page = await (await getDevelopment(PAGE_PATH)).text();
+      assertStringIncludes(page, `${VERSION_ATTRIBUTE}="7,8,9"`);
+      stamp = "1";
+    },
+  );
+
+  await t.step(
+    "development: asks for the version of all the page files",
+    async () => {
+      stamps.length = 0;
+      await getDevelopment(PAGE_PATH);
+      assertEquals(stamps, [PAGE_SOURCES]);
+    },
+  );
+
+  await t.step(
+    "development: takes the version before it reads the files",
+    async () => {
+      events.length = 0;
+      await (await getDevelopment(PAGE_PATH)).text();
+      assertEquals(events.slice(0, 2), ["stamp", `read ${INDEX_HTML_SOURCE}`]);
     },
   );
 

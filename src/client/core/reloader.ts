@@ -11,9 +11,9 @@ import { Singleton } from "../../singleton.ts";
  * mode.
  *
  * @remarks
- * Only one instance exists. It asks the server for the version of the files at
- * a fixed interval. The first answer is the version that the page has. A
- * different answer later means that a file changed.
+ * Only one instance exists. It gets the version that the server gave to the
+ * page. It asks the server for the version of the files at a fixed interval. A
+ * different answer means that a file changed after the server sent the page.
  */
 export class Reloader {
   /** Keeps the one instance. */
@@ -28,21 +28,21 @@ export class Reloader {
     return Reloader.holder.get();
   }
 
-  /** The version that the page has. It is `undefined` before the first answer. */
-  private version: string | undefined;
-
   /**
-   * Keep the function that loads the page again.
+   * Keep the version of the page and the function that loads the page again.
    *
+   * @param version - The version that the server gave to the page.
    * @param reload - The function that loads the page again.
    * @throws {Error} When a `Reloader` exists already.
    *
    * @example
    * ```typescript
-   * new Reloader(() => location.reload()).start();
+   * new Reloader(version, () => location.reload()).start();
    * ```
    */
   public constructor(
+    /** The version that the server gave to the page. */
+    private readonly version: string,
     /** The function that loads the page again. */
     private readonly reload: () => void,
   ) {
@@ -63,10 +63,7 @@ export class Reloader {
   private async check(): Promise<void> {
     try {
       const answer = await fetch(VERSION_PATH, { cache: "no-store" });
-      const version = await answer.text();
-      if (this.version === undefined) {
-        this.version = version;
-      } else if (version !== this.version) {
+      if ((await answer.text()) !== this.version) {
         this.reload();
       }
     } catch {

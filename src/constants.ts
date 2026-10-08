@@ -94,8 +94,18 @@ export const DESKTOP_ARGUMENTS: readonly string[] = [
   "dev",
 ];
 
+/** The paths of the page files on the disk, from the folder of the project. */
+export const PAGE_SOURCES: readonly string[] = [
+  INDEX_HTML_SOURCE,
+  STYLES_SOURCE,
+  CLIENT_SCRIPT_SOURCE,
+];
+
 /** The attribute that the server adds to the `<body>` of the page in development mode. */
 export const DEV_ATTRIBUTE = "data-development";
+
+/** The attribute that the server adds to the `<body>` in development mode. It has the version of the page files that the server read for the page. */
+export const VERSION_ATTRIBUTE = "data-version";
 
 /** The path of the web page. */
 export const PAGE_PATH = "/";

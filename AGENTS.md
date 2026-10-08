@@ -152,7 +152,9 @@ change the page. So in development mode the server reads `index.html`,
 `styles.css`, and `dist/client.js` from the disk for each request, and it
 answers `/version` with a text that changes when one of them changes. The
 `Reloader` in the page asks for this text twice each second and loads the page
-again when it changes. This is a reload of the page. It does not keep the state
+again when it is not the version that the server put in the page (the attribute
+`data-version` of the `<body>`). The server takes this version before it reads
+the files, so a change in the first moments after the page loads is not lost. This is a reload of the page. It does not keep the state
 of the page. A built app uses the files that are inside it.
 The app is a compiled program, and it has no permission unless the start command
 gives it. So `deno task dev` starts the app with `--allow-read` for these three

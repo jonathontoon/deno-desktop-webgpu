@@ -11,6 +11,7 @@ import {
   DEV_ATTRIBUTE,
   ERROR_ELEMENT_ID,
   METER_ELEMENT_ID,
+  VERSION_ATTRIBUTE,
 } from "../constants.ts";
 import { Alert } from "./core/alert.ts";
 import { Application } from "./core/application.ts";
@@ -38,7 +39,10 @@ async function main(): Promise<void> {
   if (document.body.hasAttribute(DEV_ATTRIBUTE)) {
     meterElement!.hidden = false;
     new Meter(meterElement!, canvas as HTMLCanvasElement).start();
-    new Reloader(() => location.reload()).start();
+    new Reloader(
+      document.body.getAttribute(VERSION_ATTRIBUTE) ?? "",
+      () => location.reload(),
+    ).start();
   }
   new Application(canvas as HTMLCanvasElement, backend).start();
 }

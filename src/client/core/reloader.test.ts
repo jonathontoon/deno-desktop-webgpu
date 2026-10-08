@@ -16,7 +16,7 @@ Deno.test("Reloader", async (t) => {
   });
 
   let reloads = 0;
-  const reloader = new Reloader(() => void (reloads += 1));
+  const reloader = new Reloader("1", () => void (reloads += 1));
 
   await t.step("shared gives the instance", () => {
     assertStrictEquals(Reloader.shared, reloader);
@@ -24,7 +24,7 @@ Deno.test("Reloader", async (t) => {
 
   await t.step("a second Reloader fails", () => {
     assertThrows(
-      () => new Reloader(() => {}),
+      () => new Reloader("1", () => {}),
       Error,
       "Reloader exists already.",
     );

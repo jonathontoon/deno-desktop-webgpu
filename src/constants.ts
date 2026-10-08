@@ -19,7 +19,7 @@ export const WINDOW_OPTIONS = {
 export const CANVAS_ALPHA_MODE: GPUCanvasAlphaMode = "opaque";
 
 /** The color that fills the window before each frame. Each value is from 0 to 1. */
-export const CLEAR_COLOR: GPUColorDict = { r: 0.05, g: 0.05, b: 0.1, a: 1 };
+export const CLEAR_COLOR: GPUColorDict = { r: 0, g: 0, b: 0, a: 1 };
 
 /** The name of the vertex function in each shader file. */
 export const VERTEX_ENTRY_POINT = "vertexMain";
@@ -39,14 +39,14 @@ export const CANVAS_ELEMENT_ID = "canvas";
 /** The `id` of the element that shows a start-up error to the user. */
 export const ERROR_ELEMENT_ID = "error";
 
-/** The `id` of the element that shows the name of the drawing method. */
-export const BACKEND_ELEMENT_ID = "backend";
+/** The `id` of the element that shows the numbers of the meter. */
+export const METER_ELEMENT_ID = "meter";
 
-/** The `id` of the element that shows the number of frames each second. */
-export const FPS_ELEMENT_ID = "fps";
+/** How often the meter counts a timer tick, in milliseconds. */
+export const METER_TICK_MS = 100;
 
-/** How long the meter counts frames before it shows a number, in milliseconds. */
-export const FPS_INTERVAL_MS = 500;
+/** How often the meter shows the numbers, in milliseconds. */
+export const METER_INTERVAL_MS = 1000;
 
 /** The argument that `deno task dev` gives to the app to turn on development mode. */
 export const DEV_ARGUMENT = "dev";
@@ -66,16 +66,46 @@ export const BUNDLE_ARGUMENTS: readonly string[] = [
 /** The argument of `deno bundle` that makes it bundle again after each change. */
 export const WATCH_ARGUMENT = "--watch";
 
-/** The arguments of `deno` that start the app with hot reloading in development mode. */
+/** The path of the answer that tells the page if a file of the page changed. */
+export const VERSION_PATH = "/version";
+
+/** How often the page asks the server for changes in development mode, in milliseconds. */
+export const RELOAD_INTERVAL_MS = 500;
+
+/** The path of the HTML file on the disk, from the folder of the project. */
+export const INDEX_HTML_SOURCE = "src/client/index.html";
+
+/** The path of the style sheet on the disk, from the folder of the project. */
+export const STYLES_SOURCE = "src/client/styles.css";
+
+/** The path of the bundled page script on the disk, from the folder of the project. */
+export const CLIENT_SCRIPT_SOURCE = "dist/client.js";
+
+/**
+ * The arguments of `deno` that start the app with hot reloading in development
+ * mode. The app may read only the three page files that the server reads from
+ * the disk. Without this, the app asks for the permission at each start.
+ */
 export const DESKTOP_ARGUMENTS: readonly string[] = [
   "desktop",
   "--hmr",
+  `--allow-read=${INDEX_HTML_SOURCE},${STYLES_SOURCE},${CLIENT_SCRIPT_SOURCE}`,
   "src/app.ts",
   "dev",
 ];
 
+/** The paths of the page files on the disk, from the folder of the project. */
+export const PAGE_SOURCES: readonly string[] = [
+  INDEX_HTML_SOURCE,
+  STYLES_SOURCE,
+  CLIENT_SCRIPT_SOURCE,
+];
+
 /** The attribute that the server adds to the `<body>` of the page in development mode. */
 export const DEV_ATTRIBUTE = "data-development";
+
+/** The attribute that the server adds to the `<body>` in development mode. It has the version of the page files that the server read for the page. */
+export const VERSION_ATTRIBUTE = "data-version";
 
 /** The path of the web page. */
 export const PAGE_PATH = "/";
@@ -92,6 +122,9 @@ export const HTML_CONTENT_TYPE = "text/html; charset=utf-8";
 /** The media type of the style sheet of the page. */
 export const CSS_CONTENT_TYPE = "text/css; charset=utf-8";
 
+/** The media type of a plain text answer. */
+export const TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
+
 /** The media type of the script of the page. */
 export const SCRIPT_CONTENT_TYPE = "text/javascript; charset=utf-8";
 
@@ -101,11 +134,6 @@ export const HTTP_NOT_FOUND = 404;
 /** The box that the `ResizeObserver` of the canvas watches: device pixels. */
 export const CANVAS_OBSERVED_BOX: ResizeObserverOptions = {
   box: "device-pixel-content-box",
-};
-
-/** The box that the `ResizeObserver` watches when the web view has no device pixel box: CSS pixels. */
-export const CANVAS_OBSERVED_BOX_FALLBACK: ResizeObserverOptions = {
-  box: "content-box",
 };
 
 /** How far the triangle moves to the right, in screen units. A negative value moves it to the left. */

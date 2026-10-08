@@ -1,6 +1,6 @@
 {
   "desktop": {
-    "backend": "webview"
+    "backend": "cef"
   },
   "unstable": [
     "webgpu"

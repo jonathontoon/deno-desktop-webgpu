@@ -8,7 +8,6 @@ import type { CanvasDelegate } from "../../types.ts";
 import {
   createFakeSurface,
   installFakeAnimationFrames,
-  installFakeMatchMedia,
   installFakeResizeObserver,
 } from "../../testing/fakes.ts";
 import { Canvas } from "./canvas.ts";
@@ -36,7 +35,6 @@ Deno.test("Canvas", async (t) => {
   });
 
   const observers = installFakeResizeObserver();
-  const media = installFakeMatchMedia();
   const frames = installFakeAnimationFrames();
   const fake = createFakeSurface();
   const canvas = new Canvas(fake.surface);
@@ -57,41 +55,95 @@ Deno.test("Canvas", async (t) => {
     );
   });
 
-  await t.step("the constructor does not wait for a pixel ratio change", () => {
-    assertEquals(media.queries, []);
-  });
-
   await t.step("the constructor watches the box in device pixels", () => {
     assertEquals(observers.options.get(fake.surface), {
       box: "device-pixel-content-box",
     });
   });
 
-  await t.step("a size report sets the size of the surface", () => {
+  const times: number[] = [];
+  const delegate = createDelegate(times);
+
+  // The size tests run with the frame loop, because the surface gets a new size
+  // at the start of a frame.
+  canvas.start(delegate);
+  let time = 0;
+  /** Run one frame, and give the time of the frame. */
+  const nextFrame = (): number => {
+    time += 16;
+    frames.step(time);
+    return time;
+  };
+
+  await t.step("a size report does not change the surface at once", () => {
     observers.resize(fake.surface, 1600, 1200);
+    assertEquals(fake.surface.width, 300);
+    assertEquals(fake.surface.height, 150);
+  });
+
+  await t.step("the next frame sets the size of the surface", () => {
+    nextFrame();
     assertEquals(fake.surface.width, 1600);
     assertEquals(fake.surface.height, 1200);
   });
 
-  await t.step("a new size report changes the surface again", () => {
+  await t.step("the surface has the new size when the delegate draws", () => {
+    const sizes: string[] = [];
+    onFrame = () => sizes.push(`${fake.surface.width}x${fake.surface.height}`);
     observers.resize(fake.surface, 802, 600);
-    assertEquals(fake.surface.width, 802);
-    assertEquals(fake.surface.height, 600);
+    nextFrame();
+    onFrame = () => {};
+    assertEquals(sizes, ["802x600"]);
   });
+
+  await t.step("only the newest size report counts", () => {
+    observers.resize(fake.surface, 700, 500);
+    observers.resize(fake.surface, 710, 510);
+    nextFrame();
+    assertEquals(fake.surface.width, 710);
+    assertEquals(fake.surface.height, 510);
+  });
+
+  await t.step(
+    "a size that the surface has already is not written again",
+    () => {
+      const writes: string[] = [];
+      let width = fake.surface.width;
+      let height = fake.surface.height;
+      Object.defineProperties(fake.surface, {
+        width: {
+          get: () => width,
+          set: (v) => (writes.push("width"), width = v),
+        },
+        height: {
+          get: () => height,
+          set: (v) => (writes.push("height"), height = v),
+        },
+      });
+      observers.resize(fake.surface, 710, 510);
+      nextFrame();
+      assertEquals(writes, []);
+      observers.resize(fake.surface, 720, 510);
+      nextFrame();
+      assertEquals(writes, ["width"]);
+    },
+  );
 
   await t.step("a size report never makes a surface of size 0", () => {
     observers.resize(fake.surface, 0, 0);
+    nextFrame();
     assertEquals(fake.surface.width, 1);
     assertEquals(fake.surface.height, 1);
   });
 
   await t.step("aspectRatio is the width divided by the height", () => {
     observers.resize(fake.surface, 900, 300);
+    nextFrame();
     assertEquals(canvas.aspectRatio, 3);
   });
 
-  const times: number[] = [];
-  const delegate = createDelegate(times);
+  canvas.stop();
+  times.length = 0;
 
   await t.step("start asks for a frame and draws none at once", () => {
     canvas.start(delegate);
@@ -164,7 +216,6 @@ Deno.test("Canvas", async (t) => {
     canvas.stop();
   });
 
-  media.restore();
   observers.restore();
   frames.restore();
 });

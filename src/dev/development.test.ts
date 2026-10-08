@@ -6,7 +6,10 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import {
   BUNDLE_ARGUMENTS,
+  CLIENT_SCRIPT_SOURCE,
   DESKTOP_ARGUMENTS,
+  INDEX_HTML_SOURCE,
+  STYLES_SOURCE,
   WATCH_ARGUMENT,
 } from "../constants.ts";
 import type { ProcessStatus, SpawnProcess } from "../types.ts";
@@ -51,6 +54,18 @@ Deno.test("runDevelopment", async (t) => {
     const { spawn, events } = createSpawn([]);
     await runDevelopment(spawn);
     assertEquals(events.at(-1), `kill ${WATCH}`);
+  });
+
+  await t.step("lets the app read only the page files", () => {
+    const flag = DESKTOP_ARGUMENTS.find((argument) =>
+      argument.startsWith("--allow-read=")
+    );
+    assertEquals(
+      flag,
+      `--allow-read=${INDEX_HTML_SOURCE},${STYLES_SOURCE},${CLIENT_SCRIPT_SOURCE}`,
+    );
+    assertEquals(DESKTOP_ARGUMENTS.includes("--allow-all"), false);
+    assertEquals(DESKTOP_ARGUMENTS.includes("-A"), false);
   });
 
   await t.step("gives the exit code of the app", async () => {

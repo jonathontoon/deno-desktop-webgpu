@@ -5,20 +5,26 @@
  */
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
-  BACKEND_ELEMENT_ID,
   CANVAS_ELEMENT_ID,
   CLEAR_COLOR,
   CLIENT_SCRIPT_PATH,
+  CLIENT_SCRIPT_SOURCE,
   DEV_ATTRIBUTE,
   ERROR_ELEMENT_ID,
-  FPS_ELEMENT_ID,
   HTTP_NOT_FOUND,
+  INDEX_HTML_SOURCE,
+  METER_ELEMENT_ID,
   PAGE_PATH,
+  PAGE_SOURCES,
   STYLES_PATH,
+  STYLES_SOURCE,
+  VERSION_ATTRIBUTE,
+  VERSION_PATH,
   WINDOW_OPTIONS,
 } from "../constants.ts";
 import INDEX_HTML from "../client/index.html" with { type: "text" };
 import STYLES_CSS from "../client/styles.css" with { type: "text" };
+import type { DiskFiles } from "../types.ts";
 import { createRequestHandler } from "./server.ts";
 
 Deno.test("index.html", async (t) => {
@@ -30,17 +36,12 @@ Deno.test("index.html", async (t) => {
     assertStringIncludes(INDEX_HTML, `id="${ERROR_ELEMENT_ID}"`);
   });
 
-  await t.step("has the element for the name of the drawing method", () => {
-    assertStringIncludes(INDEX_HTML, `id="${BACKEND_ELEMENT_ID}"`);
+  await t.step("has the element for the meter", () => {
+    assertStringIncludes(INDEX_HTML, `id="${METER_ELEMENT_ID}"`);
   });
 
-  await t.step("has the element for the frame rate", () => {
-    assertStringIncludes(INDEX_HTML, `id="${FPS_ELEMENT_ID}"`);
-  });
-
-  await t.step("hides both elements until development mode shows them", () => {
-    assertStringIncludes(INDEX_HTML, `<p id="${BACKEND_ELEMENT_ID}" hidden>`);
-    assertStringIncludes(INDEX_HTML, `<p id="${FPS_ELEMENT_ID}" hidden>`);
+  await t.step("hides the meter until development mode shows it", () => {
+    assertStringIncludes(INDEX_HTML, `<p id="${METER_ELEMENT_ID}" hidden>`);
   });
 
   await t.step("has a <body> tag that the server can mark", () => {
@@ -61,6 +62,15 @@ Deno.test("index.html", async (t) => {
 });
 
 Deno.test("styles.css", async (t) => {
+  await t.step("makes the canvas a square as large as the shorter side", () => {
+    assertStringIncludes(STYLES_CSS, "width: 100vmin;");
+    assertStringIncludes(STYLES_CSS, "height: 100vmin;");
+  });
+
+  await t.step("puts the canvas in the center of the window", () => {
+    assertStringIncludes(STYLES_CSS, "place-items: center;");
+  });
+
   await t.step("has the clear color as the page background", () => {
     const [red, green, blue] = [CLEAR_COLOR.r, CLEAR_COLOR.g, CLEAR_COLOR.b]
       .map((value) => Math.round(value * 255).toString(16).padStart(2, "0"));
@@ -71,12 +81,15 @@ Deno.test("styles.css", async (t) => {
 Deno.test("createRequestHandler", async (t) => {
   const handler = createRequestHandler("console.log(1);");
 
-  /** Ask the handler for a path and give the response. */
-  const get = (path: string): Response =>
-    handler(new Request(`http://localhost${path}`));
+  /** Ask a handler for a path and give the response. */
+  const ask = (
+    target: (request: Request) => Promise<Response>,
+    path: string,
+  ): Promise<Response> => target(new Request(`http://localhost${path}`));
+  const get = (path: string): Promise<Response> => ask(handler, path);
 
   await t.step("answers the page path with the page", async () => {
-    const response = get(PAGE_PATH);
+    const response = await get(PAGE_PATH);
     assertStringIncludes(
       response.headers.get("content-type") ?? "",
       "text/html",
@@ -85,19 +98,12 @@ Deno.test("createRequestHandler", async (t) => {
   });
 
   await t.step("does not mark the page as development mode", async () => {
-    const page = await get(PAGE_PATH).text();
+    const page = await (await get(PAGE_PATH)).text();
     assertEquals(page.includes(DEV_ATTRIBUTE), false);
   });
 
-  await t.step("marks the page as development mode when asked", async () => {
-    const development = createRequestHandler("console.log(1);", true);
-    const page = await development(new Request("http://localhost/")).text();
-    assertStringIncludes(page, `<body ${DEV_ATTRIBUTE}>`);
-    assertEquals(page, INDEX_HTML.replace("<body>", `<body ${DEV_ATTRIBUTE}>`));
-  });
-
   await t.step("answers the style sheet path with CSS", async () => {
-    const response = get(STYLES_PATH);
+    const response = await get(STYLES_PATH);
     assertStringIncludes(
       response.headers.get("content-type") ?? "",
       "text/css",
@@ -106,7 +112,7 @@ Deno.test("createRequestHandler", async (t) => {
   });
 
   await t.step("answers the script path with the script", async () => {
-    const response = get(CLIENT_SCRIPT_PATH);
+    const response = await get(CLIENT_SCRIPT_PATH);
     assertStringIncludes(
       response.headers.get("content-type") ?? "",
       "text/javascript",
@@ -114,9 +120,136 @@ Deno.test("createRequestHandler", async (t) => {
     assertEquals(await response.text(), "console.log(1);");
   });
 
-  await t.step("answers another path with not found", async () => {
-    const response = get("/other");
+  await t.step("has no version path outside development mode", async () => {
+    const response = await get(VERSION_PATH);
     assertEquals(response.status, HTTP_NOT_FOUND);
     await response.body?.cancel();
   });
+
+  await t.step(
+    "lets the browser keep the files outside development mode",
+    async () => {
+      const response = await get(PAGE_PATH);
+      assertEquals(response.headers.get("cache-control"), null);
+      await response.body?.cancel();
+    },
+  );
+
+  await t.step("answers another path with not found", async () => {
+    const response = await get("/other");
+    assertEquals(response.status, HTTP_NOT_FOUND);
+    await response.body?.cancel();
+  });
+
+  // Development mode: the files come from a fake disk.
+  const contents: Record<string, string> = {
+    [INDEX_HTML_SOURCE]: "<html><body>disk page</body></html>",
+    [STYLES_SOURCE]: "canvas { color: blue; }",
+    [CLIENT_SCRIPT_SOURCE]: "console.log('disk');",
+  };
+  let stamp = "1";
+  const reads: string[] = [];
+  const stamps: Array<readonly string[]> = [];
+  const events: string[] = [];
+  const disk: DiskFiles = {
+    read: (path) => {
+      reads.push(path);
+      events.push(`read ${path}`);
+      return Promise.resolve(contents[path]);
+    },
+    stamp: (paths) => {
+      stamps.push(paths);
+      events.push("stamp");
+      return Promise.resolve(stamp);
+    },
+  };
+  const development = createRequestHandler("console.log(1);", disk);
+  const getDevelopment = (path: string): Promise<Response> =>
+    ask(development, path);
+
+  await t.step(
+    "development: marks the page and reads it from the disk",
+    async () => {
+      const page = await (await getDevelopment(PAGE_PATH)).text();
+      assertEquals(
+        page,
+        `<html><body ${DEV_ATTRIBUTE} ${VERSION_ATTRIBUTE}="1">disk page</body></html>`,
+      );
+    },
+  );
+
+  await t.step(
+    "development: gives the page the version of the files",
+    async () => {
+      stamp = "7,8,9";
+      const page = await (await getDevelopment(PAGE_PATH)).text();
+      assertStringIncludes(page, `${VERSION_ATTRIBUTE}="7,8,9"`);
+      stamp = "1";
+    },
+  );
+
+  await t.step(
+    "development: asks for the version of all the page files",
+    async () => {
+      stamps.length = 0;
+      await getDevelopment(PAGE_PATH);
+      assertEquals(stamps, [PAGE_SOURCES]);
+    },
+  );
+
+  await t.step(
+    "development: takes the version before it reads the files",
+    async () => {
+      events.length = 0;
+      await (await getDevelopment(PAGE_PATH)).text();
+      assertEquals(events.slice(0, 2), ["stamp", `read ${INDEX_HTML_SOURCE}`]);
+    },
+  );
+
+  await t.step("development: reads the style sheet from the disk", async () => {
+    assertEquals(
+      await (await getDevelopment(STYLES_PATH)).text(),
+      "canvas { color: blue; }",
+    );
+  });
+
+  await t.step("development: reads the script from the disk", async () => {
+    assertEquals(
+      await (await getDevelopment(CLIENT_SCRIPT_PATH)).text(),
+      "console.log('disk');",
+    );
+  });
+
+  await t.step(
+    "development: reads the disk again for each request",
+    async () => {
+      contents[CLIENT_SCRIPT_SOURCE] = "console.log('changed');";
+      assertEquals(
+        await (await getDevelopment(CLIENT_SCRIPT_PATH)).text(),
+        "console.log('changed');",
+      );
+      assertEquals(
+        reads.filter((path) => path === CLIENT_SCRIPT_SOURCE).length,
+        2,
+      );
+    },
+  );
+
+  await t.step(
+    "development: answers the version path with the stamp",
+    async () => {
+      assertEquals(await (await getDevelopment(VERSION_PATH)).text(), "1");
+      stamp = "2";
+      assertEquals(await (await getDevelopment(VERSION_PATH)).text(), "2");
+    },
+  );
+
+  await t.step(
+    "development: tells the browser not to keep the files",
+    async () => {
+      const response = await getDevelopment(PAGE_PATH);
+      assertEquals(response.headers.get("cache-control"), "no-store");
+      await response.body?.cancel();
+    },
+  );
 });

@@ -3,7 +3,10 @@
  *
  * @module
  */
-import { CANVAS_OBSERVED_BOX } from "../../constants.ts";
+import {
+  CANVAS_OBSERVED_BOX,
+  CANVAS_OBSERVED_BOX_FALLBACK,
+} from "../../constants.ts";
 import { Singleton } from "../../singleton.ts";
 import type { CanvasDelegate } from "../../types.ts";
 
@@ -16,7 +19,9 @@ import type { CanvasDelegate } from "../../types.ts";
  * Only one instance exists. The canvas fills the window. A `ResizeObserver`
  * gives the size of the canvas on the screen in device pixels. It reports a
  * new size when the window changes size, and when the window moves to a screen
- * with a different pixel ratio. The frame loop uses `requestAnimationFrame`,
+ * with a different pixel ratio. Some web views, such as WebKit, cannot observe
+ * the device pixel box. Then the canvas observes the box in CSS pixels and
+ * multiplies it by `devicePixelRatio`. The frame loop uses `requestAnimationFrame`,
  * so the browser sets the speed of the frames and pauses them when the window
  * is hidden.
  */
@@ -64,7 +69,7 @@ export class Canvas {
   ) {
     Canvas.holder.assertEmpty();
     this.sizeObserver = new ResizeObserver((entries) => this.resize(entries));
-    this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX);
+    this.observe(surface);
     Canvas.holder.claim(this);
   }
 
@@ -98,15 +103,34 @@ export class Canvas {
   }
 
   /**
+   * Watch the size of the canvas in device pixels. If the web view cannot do
+   * this, watch the size in CSS pixels.
+   *
+   * @param surface - The canvas to watch.
+   */
+  private observe(surface: HTMLCanvasElement): void {
+    try {
+      this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX);
+    } catch {
+      this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX_FALLBACK);
+    }
+  }
+
+  /**
    * Make the drawing surface as large as the canvas is on the screen.
    *
    * @param entries - The size reports from the `ResizeObserver`.
    */
   private resize(entries: readonly ResizeObserverEntry[]): void {
     for (const entry of entries) {
-      const [size] = entry.devicePixelContentBoxSize;
-      this.surface.width = Math.max(1, size.inlineSize);
-      this.surface.height = Math.max(1, size.blockSize);
+      const device = entry.devicePixelContentBoxSize?.[0];
+      const [content] = entry.contentBoxSize;
+      const width = device?.inlineSize ??
+        Math.round(content.inlineSize * devicePixelRatio);
+      const height = device?.blockSize ??
+        Math.round(content.blockSize * devicePixelRatio);
+      this.surface.width = Math.max(1, width);
+      this.surface.height = Math.max(1, height);
     }
   }
 

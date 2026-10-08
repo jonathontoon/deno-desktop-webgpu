@@ -276,6 +276,15 @@ export interface FakeResizeObservers {
    * @param height - The new height, in device pixels.
    */
   resize(target: Element, width: number, height: number): void;
+  /**
+   * Send a size report that has only the box in CSS pixels. This is what a web
+   * view without the device pixel box gives.
+   *
+   * @param target - The element that changed size.
+   * @param width - The new width, in CSS pixels.
+   * @param height - The new height, in CSS pixels.
+   */
+  resizeContent(target: Element, width: number, height: number): void;
   /** Put the original `ResizeObserver` back. */
   restore(): void;
 }
@@ -283,10 +292,14 @@ export interface FakeResizeObservers {
 /**
  * Replace `ResizeObserver` with a fake that a test can drive.
  *
- * @returns The records of the calls, a `resize` function, and a `restore`
+ * @param supportsDevicePixelBox - `false` makes `observe` throw a `TypeError`
+ * for the device pixel box, as WebKit does.
+ * @returns The records of the calls, the `resize` functions, and a `restore`
  * function.
  */
-export function installFakeResizeObserver(): FakeResizeObservers {
+export function installFakeResizeObserver(
+  supportsDevicePixelBox = true,
+): FakeResizeObservers {
   const options = new Map<Element, ResizeObserverOptions | undefined>();
   const callbacks = new Map<Element, ResizeObserverCallback[]>();
 
@@ -310,6 +323,12 @@ export function installFakeResizeObserver(): FakeResizeObservers {
      * @param observeOptions - The box to watch.
      */
     public observe(target: Element, observeOptions?: ResizeObserverOptions) {
+      if (
+        !supportsDevicePixelBox &&
+        observeOptions?.box === "device-pixel-content-box"
+      ) {
+        throw new TypeError("Type error");
+      }
       options.set(target, observeOptions);
       callbacks.set(target, [...(callbacks.get(target) ?? []), this.callback]);
     }
@@ -325,16 +344,26 @@ export function installFakeResizeObserver(): FakeResizeObservers {
     value: FakeResizeObserver,
   });
 
+  /** Send one size report to each observer that watches a target. */
+  const send = (target: Element, sizes: object): void => {
+    const entry = fake<ResizeObserverEntry>({ target, ...sizes });
+    for (const callback of callbacks.get(target) ?? []) {
+      callback([entry], fake<ResizeObserver>({}));
+    }
+  };
+
   return {
     options,
     resize: (target, width, height) => {
-      const entry = fake<ResizeObserverEntry>({
-        target,
+      send(target, {
         devicePixelContentBoxSize: [{ inlineSize: width, blockSize: height }],
+        contentBoxSize: [{ inlineSize: width, blockSize: height }],
       });
-      for (const callback of callbacks.get(target) ?? []) {
-        callback([entry], fake<ResizeObserver>({}));
-      }
+    },
+    resizeContent: (target, width, height) => {
+      send(target, {
+        contentBoxSize: [{ inlineSize: width, blockSize: height }],
+      });
     },
     restore: () => {
       if (original) {
@@ -407,5 +436,31 @@ export function installFakeAnimationFrames(): FakeAnimationFrames {
         }
       });
     },
+  };
+}
+
+/**
+ * Replace `devicePixelRatio` with a fixed value.
+ *
+ * @param ratio - The number of device pixels in one CSS pixel.
+ * @returns A function that puts the original value back.
+ */
+export function installFakeDevicePixelRatio(ratio: number): () => void {
+  const original = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "devicePixelRatio",
+  );
+  Object.defineProperty(globalThis, "devicePixelRatio", {
+    configurable: true,
+    writable: true,
+    value: ratio,
+  });
+  return () => {
+    if (original) {
+      Object.defineProperty(globalThis, "devicePixelRatio", original);
+    } else {
+      delete (globalThis as unknown as Record<string, unknown>)
+        .devicePixelRatio;
+    }
   };
 }

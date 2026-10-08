@@ -65,6 +65,11 @@ export const CANVAS_OBSERVED_BOX: ResizeObserverOptions = {
   box: "device-pixel-content-box",
 };
 
+/** The box that the `ResizeObserver` watches when the web view has no device pixel box: CSS pixels. */
+export const CANVAS_OBSERVED_BOX_FALLBACK: ResizeObserverOptions = {
+  box: "content-box",
+};
+
 /** How far the triangle moves to the right, in screen units. A negative value moves it to the left. */
 export const TRIANGLE_OFFSET_X: number = -0.5;
 

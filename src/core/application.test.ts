@@ -55,8 +55,13 @@ Deno.test("Application", async (t) => {
       await assertRejects(
         () => Application.launch(),
         Error,
-        "exists already.",
+        "Application exists already.",
       );
+    });
+
+    await t.step("the failed second launch opens no second window", () => {
+      assertEquals(FakeBrowserWindow.count, 1);
+      assertStrictEquals(FakeBrowserWindow.last, native);
     });
 
     await t.step("a requested frame draws and shows the frame", () => {

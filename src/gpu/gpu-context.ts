@@ -33,6 +33,7 @@ export class GPUContext {
    * ```
    */
   public static async initialize(surface: NativeSurface): Promise<GPUContext> {
+    GPUContext.holder.assertEmpty();
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) {
       throw new Error("No WebGPU adapter is available.");
@@ -46,7 +47,9 @@ export class GPUContext {
     }
     context.configure({ device, format, alphaMode: CANVAS_ALPHA_MODE });
 
-    return GPUContext.holder.set(new GPUContext(device, context, format));
+    return GPUContext.holder.create(
+      () => new GPUContext(device, context, format),
+    );
   }
 
   /**

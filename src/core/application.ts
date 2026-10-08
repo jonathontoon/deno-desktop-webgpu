@@ -38,6 +38,7 @@ export class Application implements WindowDelegate, RenderLoopDelegate {
    * ```
    */
   public static async launch(): Promise<Application> {
+    Application.holder.assertEmpty();
     const appWindow = AppWindow.initialize(WINDOW_OPTIONS);
     const gpu = await GPUContext.initialize(appWindow.surface);
     appWindow.syncSurfaceSize();
@@ -46,8 +47,8 @@ export class Application implements WindowDelegate, RenderLoopDelegate {
     const scene = Scene.initialize();
     scene.add(new TriangleDrawable(gpu));
 
-    const application = Application.holder.set(
-      new Application(appWindow, renderer, scene),
+    const application = Application.holder.create(
+      () => new Application(appWindow, renderer, scene),
     );
     appWindow.delegate = application;
     application.loop.start();

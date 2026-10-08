@@ -30,7 +30,9 @@ export class RenderLoop {
     delegate: RenderLoopDelegate,
     frameMs: number = FRAME_MS,
   ): RenderLoop {
-    return RenderLoop.holder.set(new RenderLoop(delegate, frameMs));
+    return RenderLoop.holder.create(
+      () => new RenderLoop(delegate, frameMs),
+    );
   }
 
   /**

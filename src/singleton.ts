@@ -9,7 +9,9 @@
  *
  * @remarks
  * Each singleton class owns one holder in a `private static` field.
- * `set` accepts one instance only. `get` fails until `set` has run.
+ * `create` makes one instance only. It runs the factory after it checks that
+ * no instance exists, so a second call has no side effect. `get` fails until
+ * `create` has run.
  *
  * @typeParam T - The type of the instance that the holder keeps.
  *
@@ -19,7 +21,7 @@
  *   private static readonly holder = new Singleton<Logger>("Logger");
  *
  *   public static initialize(): Logger {
- *     return Logger.holder.set(new Logger());
+ *     return Logger.holder.create(() => new Logger());
  *   }
  *
  *   private constructor() {}
@@ -27,7 +29,7 @@
  * ```
  */
 export class Singleton<T> {
-  /** The instance. It is `undefined` until `set` runs. */
+  /** The instance. It is `undefined` until `create` runs. */
   private instance: T | undefined;
 
   /**
@@ -38,25 +40,42 @@ export class Singleton<T> {
   public constructor(private readonly name: string) {}
 
   /**
-   * Keep the instance.
+   * Make sure that the holder is empty.
    *
-   * @param instance - The instance to keep.
-   * @returns The same instance.
+   * @remarks
+   * Call this before any slow or costly work that comes before `create`.
+   * Then a second call fails at once and does not start that work.
+   *
    * @throws {Error} When the holder already has an instance.
    */
-  public set(instance: T): T {
+  public assertEmpty(): void {
     if (this.instance !== undefined) {
       throw new Error(`${this.name} exists already.`);
     }
-    this.instance = instance;
-    return instance;
+  }
+
+  /**
+   * Make the instance and keep it.
+   *
+   * @remarks
+   * The factory runs only when the holder is empty. If the holder has an
+   * instance, the factory does not run, so it makes no object.
+   *
+   * @param factory - The function that makes the instance.
+   * @returns The new instance.
+   * @throws {Error} When the holder already has an instance.
+   */
+  public create(factory: () => T): T {
+    this.assertEmpty();
+    this.instance = factory();
+    return this.instance;
   }
 
   /**
    * Give the instance.
    *
-   * @returns The instance that `set` kept.
-   * @throws {Error} When `set` has not run yet.
+   * @returns The instance that `create` kept.
+   * @throws {Error} When `create` has not run yet.
    */
   public get(): T {
     if (this.instance === undefined) {

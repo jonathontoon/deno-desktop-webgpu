@@ -34,7 +34,7 @@ export class AppWindow {
    * ```
    */
   public static initialize(options: AppWindowOptions): AppWindow {
-    return AppWindow.holder.set(new AppWindow(options));
+    return AppWindow.holder.create(() => new AppWindow(options));
   }
 
   /**
@@ -46,8 +46,11 @@ export class AppWindow {
     return AppWindow.holder.get();
   }
 
-  /** The window tells this object about events. It is optional. */
-  public delegate: WindowDelegate | undefined;
+  /** The object that gets the events. It is `undefined` until a caller sets it. */
+  private windowDelegate: WindowDelegate | undefined;
+
+  /** `true` after the user closed the window, even if no delegate was set. */
+  private closeRequested = false;
 
   /** The part of the window that WebGPU draws to. */
   public readonly surface: NativeSurface;
@@ -65,10 +68,32 @@ export class AppWindow {
     this.window = new Deno.BrowserWindow(options);
     this.surface = this.window.getNativeWindow();
     this.window.addEventListener("resize", () => this.syncSurfaceSize());
-    this.window.addEventListener(
-      "close",
-      () => this.delegate?.windowDidClose(),
-    );
+    this.window.addEventListener("close", () => {
+      this.closeRequested = true;
+      this.windowDelegate?.windowDidClose();
+    });
+  }
+
+  /** The object that gets the events of the window. It is optional. */
+  public get delegate(): WindowDelegate | undefined {
+    return this.windowDelegate;
+  }
+
+  /**
+   * Set the object that gets the events of the window.
+   *
+   * @remarks
+   * The user can close the window before a delegate exists. For example, the
+   * window can close while the GPU starts. In that case the new delegate gets
+   * `windowDidClose` at once, so the event is not lost.
+   *
+   * @param value - The new delegate, or `undefined` to remove it.
+   */
+  public set delegate(value: WindowDelegate | undefined) {
+    this.windowDelegate = value;
+    if (value && this.closeRequested) {
+      value.windowDidClose();
+    }
   }
 
   /** The width of the surface divided by its height. */

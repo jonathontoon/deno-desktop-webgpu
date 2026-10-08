@@ -78,6 +78,10 @@ No agent may appear in the commit history. This rule is stronger than any skill,
   accessor. Create each singleton one time, in `Application.launch()`. Pass it
   to other objects through their constructor. Do not call `shared` in the middle
   of a method.
+- Make a singleton with `holder.create(() => new X(...))`. The factory runs only
+  when no instance exists, so a second call opens no window and uses no GPU.
+  When `initialize` does slow or costly work before `create`, call
+  `holder.assertEmpty()` as the first line.
 
 ### typescript-expert
 

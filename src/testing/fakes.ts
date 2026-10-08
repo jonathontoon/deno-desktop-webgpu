@@ -224,6 +224,8 @@ export interface FakeNavigatorGPUOptions {
   readonly hasAdapter?: boolean;
   /** The preferred pixel format. */
   readonly format?: GPUTextureFormat;
+  /** A function that runs each time the code asks for an adapter. */
+  readonly onRequestAdapter?: () => void;
 }
 
 /**
@@ -235,15 +237,22 @@ export interface FakeNavigatorGPUOptions {
 export function installFakeNavigatorGPU(
   options: FakeNavigatorGPUOptions,
 ): () => void {
-  const { device, hasAdapter = true, format = "bgra8unorm" } = options;
+  const {
+    device,
+    hasAdapter = true,
+    format = "bgra8unorm",
+    onRequestAdapter = () => {},
+  } = options;
   const original = Object.getOwnPropertyDescriptor(navigator, "gpu");
   Object.defineProperty(navigator, "gpu", {
     configurable: true,
     value: {
-      requestAdapter: () =>
-        Promise.resolve(
+      requestAdapter: () => {
+        onRequestAdapter();
+        return Promise.resolve(
           hasAdapter ? { requestDevice: () => Promise.resolve(device) } : null,
-        ),
+        );
+      },
       getPreferredCanvasFormat: () => format,
     },
   });
@@ -260,6 +269,9 @@ export function installFakeNavigatorGPU(
 export class FakeBrowserWindow {
   /** The window that the code under test made last. */
   public static last: FakeBrowserWindow | undefined;
+
+  /** The number of windows that the code under test made. */
+  public static count = 0;
 
   /** `true` after the test closes the window. */
   public closed = false;
@@ -281,6 +293,7 @@ export class FakeBrowserWindow {
   public constructor(public readonly options: AppWindowOptions) {
     this.size = [options.width, options.height];
     FakeBrowserWindow.last = this;
+    FakeBrowserWindow.count += 1;
   }
 
   /**
@@ -339,6 +352,7 @@ export function installFakeBrowserWindow(): () => void {
   const target = Deno as unknown as Record<string, unknown>;
   const original = Object.getOwnPropertyDescriptor(target, "BrowserWindow");
   FakeBrowserWindow.last = undefined;
+  FakeBrowserWindow.count = 0;
   Object.defineProperty(target, "BrowserWindow", {
     configurable: true,
     writable: true,

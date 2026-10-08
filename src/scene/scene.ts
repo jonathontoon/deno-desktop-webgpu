@@ -24,7 +24,7 @@ export class Scene implements Drawable {
    * @throws {Error} When a `Scene` exists already.
    */
   public static initialize(): Scene {
-    return Scene.holder.set(new Scene());
+    return Scene.holder.create(() => new Scene());
   }
 
   /**

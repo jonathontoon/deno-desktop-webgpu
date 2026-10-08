@@ -46,6 +46,11 @@ Deno.test("AppWindow", async (t) => {
       );
     });
 
+    await t.step("the failed second initialize opens no second window", () => {
+      assertEquals(FakeBrowserWindow.count, 1);
+      assertStrictEquals(FakeBrowserWindow.last, native);
+    });
+
     await t.step("the surface is the native surface of the window", () => {
       assertStrictEquals(appWindow.surface, native.surfaceKit.surface);
     });
@@ -83,16 +88,32 @@ Deno.test("AppWindow", async (t) => {
       native.closed = false;
     });
 
-    await t.step("a close event with no delegate does nothing", () => {
-      native.dispatch("close");
+    await t.step("a new delegate is not told when no close happened", () => {
+      let closeCount = 0;
+      appWindow.delegate = { windowDidClose: () => closeCount++ };
+      assertEquals(closeCount, 0);
+      appWindow.delegate = undefined;
     });
 
     await t.step("a close event tells the delegate", () => {
       let closeCount = 0;
       const delegate: WindowDelegate = { windowDidClose: () => closeCount++ };
       appWindow.delegate = delegate;
+      assertStrictEquals(appWindow.delegate, delegate);
       native.dispatch("close");
       assertEquals(closeCount, 1);
+    });
+
+    await t.step("a delegate that is set after a close is told at once", () => {
+      // The close event of the previous step already happened.
+      let closeCount = 0;
+      appWindow.delegate = { windowDidClose: () => closeCount++ };
+      assertEquals(closeCount, 1);
+    });
+
+    await t.step("removing the delegate after a close tells nobody", () => {
+      appWindow.delegate = undefined;
+      native.dispatch("close");
     });
   } finally {
     restore();

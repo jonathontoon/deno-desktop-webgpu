@@ -30,7 +30,7 @@ export class Renderer {
     gpu: GPUContext,
     clearColor: GPUColor,
   ): Renderer {
-    return Renderer.holder.set(new Renderer(gpu, clearColor));
+    return Renderer.holder.create(() => new Renderer(gpu, clearColor));
   }
 
   /**

@@ -87,16 +87,24 @@ Deno.test("GPUContext", async (t) => {
   });
 
   await t.step("initialize fails the second time", async () => {
-    const again = installFakeNavigatorGPU({ device: fakeDevice.device });
+    let adapterRequests = 0;
+    const again = installFakeNavigatorGPU({
+      device: fakeDevice.device,
+      onRequestAdapter: () => adapterRequests++,
+    });
+    const secondSurface = createFakeSurface();
     try {
       await assertRejects(
-        () => GPUContext.initialize(createFakeSurface().surface),
+        () => GPUContext.initialize(secondSurface.surface),
         Error,
         "GPUContext exists already.",
       );
     } finally {
       again();
     }
+    // The failed call must not ask for a GPU or touch the second window.
+    assertEquals(adapterRequests, 0);
+    assertEquals(secondSurface.configurations, []);
   });
 
   await t.step("currentView gives a view of the current texture", () => {

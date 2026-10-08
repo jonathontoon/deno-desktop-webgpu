@@ -138,7 +138,20 @@ and WebKitGTK on Linux. The page has one `<canvas>` element. The code in `src/`
 draws to the canvas.
 
 The oldest macOS that this project supports is macOS 14. The web view has no
-DevTools. WebGPU is not in every web view, so the program must not need it.
+DevTools. The page shows the name of the drawing method in the `backend`
+element, so you can see which one runs.
+
+WebGPU is not in every web view: macOS 14 and 15 and WebKitGTK on Linux do not
+have it. So the program has two drawing methods, and it uses the first one that
+works:
+
+1. WebGPU (`WebGPU` in `src/client/gpu/`).
+2. WebGL2 (`WebGL2` in `src/client/gl/`).
+
+Each one implements the `Backend` protocol. `selectBackend` in
+`src/client/core/backend.ts` chooses the backend. If both fail, `Alert` shows an
+error. WebKit also has no `devicePixelContentBoxSize`, so `Canvas` falls back to
+the size in CSS pixels times `devicePixelRatio`.
 
 The Deno side (`src/app.ts`) opens the window and serves the page. The browser
 side (`src/client/main.ts`) runs in the page and draws.
@@ -168,8 +181,9 @@ When a Deno release has the fix, do these steps:
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
 | `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
 |                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, and `Alert`.                             |
-| `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                      |
+| `src/client/core/`  | `Application`, `Canvas`, `Alert`, and `selectBackend`.            |
+| `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
+| `src/client/gl/`    | The WebGL2 backend: `WebGL2` and the `.glsl` shaders.             |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.       |
@@ -239,6 +253,12 @@ failed check stops the commit. GitHub runs the same checks on each push
 7. Keep all code in `src/`. The entry point is `src/app.ts`. Do not add a root `main.ts`.
    The browser code is bundled to `dist/client.js` by `deno task bundle`. Do
    not commit `dist/`.
-8. Write shader code in `.wgsl` files in `src/`. Import them as text:
+8. Write shader code in `.wgsl` files (WebGPU) and `.glsl` files (WebGL2) in
+   `src/`. Import them as text:
    `import CODE from "./file.wgsl" with { type: "text" };`
-   Do not put shader code in `.ts` files.
+   Do not put shader code in `.ts` files. The `.glsl` cube shader and
+   `cube.wgsl` must have the same numbers and the same corner table. The test
+   `src/client/gl/shaders.test.ts` checks this.
+9. A new drawing method is a new class that implements `Backend`. Add it to
+   `selectBackend` after the ones that look better. Do not let `Application`
+   know which backend it has.

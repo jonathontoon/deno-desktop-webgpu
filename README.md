@@ -5,6 +5,9 @@ This backend puts the web view of the operating system in the native window. The
 page has one canvas, and the code draws to it. The oldest supported macOS is
 macOS 14.
 
+The program draws with WebGPU when the web view has it. If not, it draws with
+WebGL2. The page shows the name of the drawing method in the lower left corner.
+
 The goal is the `raw` backend, which has no web engine. The `raw` backend does
 not work on macOS now. See the TODO in `AGENTS.md`.
 
@@ -42,8 +45,9 @@ You need a computer with a GPU that supports WebGPU.
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
 | `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
 |                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, and `Alert`.                             |
-| `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                      |
+| `src/client/core/`  | `Application`, `Canvas`, `Alert`, and `selectBackend`.            |
+| `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
+| `src/client/gl/`    | The WebGL2 backend: `WebGL2` and the `.glsl` shaders.             |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`  | The unit tests.                                                   |

@@ -4,11 +4,11 @@ A Deno desktop application that draws a 3D cube. It uses the `cef` backend.
 This backend puts a Chromium web view in the native window. The page has one
 canvas, and the code draws to it.
 
-The program draws with WebGPU. With `deno task dev`, the page also shows the
-name of the drawing method in the lower left corner. In the upper left corner it
-shows the number of animation frames and timer ticks each second, the number of
-size reports, the longest waits between two frames and between two ticks, and
-the size of the canvas. A built app does not show them.
+The program draws with WebGPU. With `deno task dev`, the page also shows a meter
+in the upper left corner. It shows the number of animation frames and timer
+ticks each second, the number of size reports, the longest waits between two
+frames and between two ticks, and the size of the canvas. The page also loads
+itself again when you change a file. A built app does not show these things.
 
 The goal is the `raw` backend, which has no web engine. The `raw` backend does
 not work on macOS now. See the TODO in `AGENTS.md`.
@@ -41,14 +41,16 @@ You need a computer with a GPU that supports WebGPU.
 | File                | Purpose                                                           |
 | ------------------- | ----------------------------------------------------------------- |
 | `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
-| `src/server/`       | Runs in the Deno process. It serves the page.                     |
+| `src/server/`       | Runs in the Deno process. It serves the page and, in              |
+|                     | development mode, reads the page files from the disk.             |
 | `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
 | `src/constants.ts`  | Holds all fixed values.                                           |
 | `src/types.ts`      | Holds all shared types and protocols.                             |
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
 | `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
 |                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, and `selectBackend`.   |
+| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
+|                     | `selectBackend`.                                                  |
 | `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |

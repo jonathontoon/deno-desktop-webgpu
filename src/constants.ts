@@ -39,9 +39,6 @@ export const CANVAS_ELEMENT_ID = "canvas";
 /** The `id` of the element that shows a start-up error to the user. */
 export const ERROR_ELEMENT_ID = "error";
 
-/** The `id` of the element that shows the name of the drawing method. */
-export const BACKEND_ELEMENT_ID = "backend";
-
 /** The `id` of the element that shows the numbers of the meter. */
 export const METER_ELEMENT_ID = "meter";
 
@@ -69,10 +66,30 @@ export const BUNDLE_ARGUMENTS: readonly string[] = [
 /** The argument of `deno bundle` that makes it bundle again after each change. */
 export const WATCH_ARGUMENT = "--watch";
 
-/** The arguments of `deno` that start the app with hot reloading in development mode. */
+/** The path of the answer that tells the page if a file of the page changed. */
+export const VERSION_PATH = "/version";
+
+/** How often the page asks the server for changes in development mode, in milliseconds. */
+export const RELOAD_INTERVAL_MS = 500;
+
+/** The path of the HTML file on the disk, from the folder of the project. */
+export const INDEX_HTML_SOURCE = "src/client/index.html";
+
+/** The path of the style sheet on the disk, from the folder of the project. */
+export const STYLES_SOURCE = "src/client/styles.css";
+
+/** The path of the bundled page script on the disk, from the folder of the project. */
+export const CLIENT_SCRIPT_SOURCE = "dist/client.js";
+
+/**
+ * The arguments of `deno` that start the app with hot reloading in development
+ * mode. The app may read only the three page files that the server reads from
+ * the disk. Without this, the app asks for the permission at each start.
+ */
 export const DESKTOP_ARGUMENTS: readonly string[] = [
   "desktop",
   "--hmr",
+  `--allow-read=${INDEX_HTML_SOURCE},${STYLES_SOURCE},${CLIENT_SCRIPT_SOURCE}`,
   "src/app.ts",
   "dev",
 ];
@@ -94,6 +111,9 @@ export const HTML_CONTENT_TYPE = "text/html; charset=utf-8";
 
 /** The media type of the style sheet of the page. */
 export const CSS_CONTENT_TYPE = "text/css; charset=utf-8";
+
+/** The media type of a plain text answer. */
+export const TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 
 /** The media type of the script of the page. */
 export const SCRIPT_CONTENT_TYPE = "text/javascript; charset=utf-8";

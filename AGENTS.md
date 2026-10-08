@@ -141,12 +141,22 @@ macOS, WKWebView pauses page rendering while the user resizes the window.
 Chromium gives the same WebGPU support on every operating system. The price is a
 larger app.
 
-In development mode, the page shows the name of the drawing method and the
-numbers of the `Meter`: the animation frames and timer ticks each second, the
+In development mode, the page shows the numbers of the `Meter`: the animation frames and timer ticks each second, the
 size reports, the longest waits, and the size of the canvas. `deno task dev`
 gives the argument `dev` to the app, and the server then adds the attribute
 `data-development` to the `<body>` of the page. A built app does not get the
 argument, so the page does not show these things.
+
+Hot module reloading of Deno only changes the code of the server. It does not
+change the page. So in development mode the server reads `index.html`,
+`styles.css`, and `dist/client.js` from the disk for each request, and it
+answers `/version` with a text that changes when one of them changes. The
+`Reloader` in the page asks for this text twice each second and loads the page
+again when it changes. This is a reload of the page. It does not keep the state
+of the page. A built app uses the files that are inside it.
+The app is a compiled program, and it has no permission unless the start command
+gives it. So `deno task dev` starts the app with `--allow-read` for these three
+files only. Without the flag, the app asks for the permission at each start.
 
 The program draws with WebGPU (`WebGPU` in `src/client/gpu/`). WebGPU needs a
 GPU and a driver that support it. If the computer has none, `Alert` shows an
@@ -180,14 +190,16 @@ When a Deno release has the fix, do these steps:
 | Path                | Purpose                                                           |
 | ------------------- | ----------------------------------------------------------------- |
 | `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
-| `src/server/`       | Runs in the Deno process. It serves the page.                     |
+| `src/server/`       | Runs in the Deno process. It serves the page and, in              |
+|                     | development mode, reads the page files from the disk.             |
 | `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
 | `src/constants.ts`  | Holds all fixed values.                                           |
 | `src/types.ts`      | Holds all shared types and protocols.                             |
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
 | `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
 |                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, and `selectBackend`.   |
+| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
+|                     | `selectBackend`.                                                  |
 | `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |

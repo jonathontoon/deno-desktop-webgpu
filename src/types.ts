@@ -5,19 +5,6 @@
  * @module
  */
 
-/** The native surface of the window. WebGPU draws to it. */
-export type NativeSurface = ReturnType<Deno.BrowserWindow["getNativeWindow"]>;
-
-/** The values that the program uses to open a window. */
-export interface AppWindowOptions {
-  /** The text in the title bar of the window. */
-  readonly title: string;
-  /** The width of the window, in pixels. */
-  readonly width: number;
-  /** The height of the window, in pixels. */
-  readonly height: number;
-}
-
 /** The data about one frame. A `Drawable` uses it to draw the frame. */
 export interface FrameInfo {
   /** The time, in milliseconds. */
@@ -30,7 +17,7 @@ export interface FrameInfo {
  * An object that records its draw calls in a render pass.
  *
  * @remarks
- * A `Scene` and a `PipelineDrawable` both implement this protocol.
+ * A `Scene` and a `Pipeline` both implement this protocol.
  * Because of this, the `Renderer` can draw one object or a list of objects
  * in the same way.
  */
@@ -44,8 +31,8 @@ export interface Drawable {
   draw(pass: GPURenderPassEncoder, frame: FrameInfo): void;
 }
 
-/** The values that a `PipelineDrawable` needs to build its GPU objects. */
-export interface PipelineDrawableOptions {
+/** The values that a `Pipeline` needs to build its GPU objects. */
+export interface PipelineOptions {
   /** The GPU device that makes the GPU objects. */
   readonly device: GPUDevice;
   /** The pixel format of the window. */
@@ -56,20 +43,58 @@ export interface PipelineDrawableOptions {
   readonly vertexCount: number;
   /** The number of numbers in the uniform buffer. */
   readonly uniformFloatCount: number;
+  /** Which faces the GPU does not draw. The default is `"none"`. */
+  readonly cullMode?: GPUCullMode;
+  /** Which winding order is the front of a face. The default is `"ccw"`. */
+  readonly frontFace?: GPUFrontFace;
 }
 
-/** The window tells its delegate about events. */
-export interface WindowDelegate {
-  /** The user closed the window. */
-  windowDidClose(): void;
-}
+/** The drawing method that the program uses to draw on the canvas. */
+export type BackendKind = "webgpu" | "webgl2";
 
-/** The render loop tells its delegate when to draw a frame. */
-export interface RenderLoopDelegate {
+/**
+ * An object that draws the scene on the canvas with one drawing method.
+ *
+ * @remarks
+ * `WebGPU` and `WebGL2` implement this protocol. `Application` does not know
+ * which one it has.
+ */
+export interface Backend {
+  /** The drawing method of this backend. */
+  readonly kind: BackendKind;
   /**
-   * The loop asks for a frame. Draw one frame now.
+   * Draw one frame.
+   *
+   * @param frame - The data about the frame that is in progress.
+   */
+  render(frame: FrameInfo): void;
+}
+
+/** How a child process ended. */
+export interface ProcessStatus {
+  /** `true` if the process ended with the code 0. */
+  readonly success: boolean;
+  /** The exit code of the process. */
+  readonly code: number;
+}
+
+/** A child process that the development runner started. */
+export interface ChildProcess {
+  /** The result. It is ready when the process ends. */
+  readonly status: Promise<ProcessStatus>;
+  /** Stop the process. Do nothing if it ended already. */
+  kill(): void;
+}
+
+/** A function that starts `deno` with the given arguments as a child process. */
+export type SpawnProcess = (args: readonly string[]) => ChildProcess;
+
+/** The canvas tells its delegate when to draw a frame. */
+export interface CanvasDelegate {
+  /**
+   * The canvas asks for a frame. Draw one frame now.
    *
    * @param time - The time, in milliseconds.
    */
-  renderLoopDidRequestFrame(time: number): void;
+  canvasDidRequestFrame(time: number): void;
 }

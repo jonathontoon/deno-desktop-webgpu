@@ -1,14 +1,24 @@
 {
   "desktop": {
-    "backend": "raw"
+    "backend": "webview"
   },
   "unstable": [
     "webgpu"
   ],
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "deno.window",
+      "deno.unstable",
+      "deno.desktop"
+    ]
+  },
   "tasks": {
-    "dev": "deno desktop --hmr src/app.ts",
-    "build": "deno desktop -o dist/deno-desktop-webgpu src/app.ts",
-    "check": "deno check --desktop src/app.ts \"src/**/*.test.ts\"",
+    "bundle": "deno bundle --platform browser --format esm --output dist/client.js src/client/main.ts",
+    "dev": "deno run --allow-run --allow-read src/dev/main.ts",
+    "build": "deno task bundle && deno desktop -o dist/deno-desktop-webgpu src/app.ts",
+    "check": "deno task bundle && deno check --desktop src/app.ts src/dev/main.ts \"src/**/*.test.ts\"",
     "lint": "deno lint",
     "lint:fix": "deno lint --fix",
     "format": "deno fmt",

@@ -51,6 +51,29 @@ export const FPS_INTERVAL_MS = 500;
 /** The argument that `deno task dev` gives to the app to turn on development mode. */
 export const DEV_ARGUMENT = "dev";
 
+/** The arguments of `deno` that bundle the page script into `dist/client.js`. */
+export const BUNDLE_ARGUMENTS: readonly string[] = [
+  "bundle",
+  "--platform",
+  "browser",
+  "--format",
+  "esm",
+  "--output",
+  "dist/client.js",
+  "src/client/main.ts",
+];
+
+/** The argument of `deno bundle` that makes it bundle again after each change. */
+export const WATCH_ARGUMENT = "--watch";
+
+/** The arguments of `deno` that start the app with hot reloading in development mode. */
+export const DESKTOP_ARGUMENTS: readonly string[] = [
+  "desktop",
+  "--hmr",
+  "src/app.ts",
+  "dev",
+];
+
 /** The attribute that the server adds to the `<body>` of the page in development mode. */
 export const DEV_ATTRIBUTE = "data-development";
 

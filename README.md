@@ -23,16 +23,16 @@ You need a computer with a GPU that supports WebGPU.
 
 ## Use
 
-| Command            | What it does                                            |
-| ------------------ | ------------------------------------------------------- |
-| `deno task bundle` | Bundle the page script into `dist/client.js`.           |
-| `deno task dev`    | Bundle, then start the app with hot reloading.          |
-| `deno task build`  | Bundle, then build the app. The output goes to `dist/`. |
-| `deno task test`   | Run the unit tests.                                     |
-| `deno task verify` | Run all checks: format, lint, types, JSDoc, and tests.  |
-| `deno task fix`    | Fix the format and the lint problems.                   |
-| `deno task lint`   | Run `deno lint`.                                        |
-| `deno task format` | Format all files with `deno fmt`.                       |
+| Command            | What it does                                                    |
+| ------------------ | --------------------------------------------------------------- |
+| `deno task bundle` | Bundle the page script into `dist/client.js`.                   |
+| `deno task dev`    | Start the app with hot reloading. It bundles after each change. |
+| `deno task build`  | Bundle, then build the app. The output goes to `dist/`.         |
+| `deno task test`   | Run the unit tests.                                             |
+| `deno task verify` | Run all checks: format, lint, types, JSDoc, and tests.          |
+| `deno task fix`    | Fix the format and the lint problems.                           |
+| `deno task lint`   | Run `deno lint`.                                                |
+| `deno task format` | Format all files with `deno fmt`.                               |
 
 `deno desktop` is an experimental Deno command. Its options can change.
 
@@ -42,6 +42,7 @@ You need a computer with a GPU that supports WebGPU.
 | ------------------- | ----------------------------------------------------------------- |
 | `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
 | `src/server/`       | Runs in the Deno process. It serves the page.                     |
+| `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
 | `src/constants.ts`  | Holds all fixed values.                                           |
 | `src/types.ts`      | Holds all shared types and protocols.                             |
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |

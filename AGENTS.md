@@ -179,6 +179,7 @@ When a Deno release has the fix, do these steps:
 | ------------------- | ----------------------------------------------------------------- |
 | `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
 | `src/server/`       | Runs in the Deno process. It serves the page.                     |
+| `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
 | `src/constants.ts`  | Holds all fixed values.                                           |
 | `src/types.ts`      | Holds all shared types and protocols.                             |
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
@@ -196,21 +197,21 @@ When a Deno release has the fix, do these steps:
 
 Run all commands with `deno task <name>`.
 
-| Task            | What it does                                                    |
-| --------------- | --------------------------------------------------------------- |
-| `bundle`        | Bundle `src/client/main.ts` into `dist/client.js` for the page. |
-| `dev`           | Bundle, then start the desktop app with hot module reloading.   |
-| `build`         | Bundle, then build the desktop app.                             |
-| `check`         | Bundle, then check the types of `src/app.ts` and of the tests.  |
-| `lint`          | Run `deno lint`.                                                |
-| `lint:fix`      | Run `deno lint --fix`.                                          |
-| `format`        | Format all files with `deno fmt`.                               |
-| `format:check`  | Check the format. It changes no file.                           |
-| `fix`           | Run `deno fmt` and `deno lint --fix`.                           |
-| `doc:lint`      | Check the JSDoc comments with `deno doc --lint`.                |
-| `test`          | Run the unit tests.                                             |
-| `test:coverage` | Run the unit tests and show the test coverage.                  |
-| `verify`        | Run `format:check`, `lint`, `check`, `doc:lint`, and `test`.    |
+| Task            | What it does                                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `bundle`        | Bundle `src/client/main.ts` into `dist/client.js` for the page.                                                               |
+| `dev`           | Bundle, then start the app with hot reloading. It also bundles after each change, and it stops the bundler when the app ends. |
+| `build`         | Bundle, then build the desktop app.                                                                                           |
+| `check`         | Bundle, then check the types of `src/app.ts` and of the tests.                                                                |
+| `lint`          | Run `deno lint`.                                                                                                              |
+| `lint:fix`      | Run `deno lint --fix`.                                                                                                        |
+| `format`        | Format all files with `deno fmt`.                                                                                             |
+| `format:check`  | Check the format. It changes no file.                                                                                         |
+| `fix`           | Run `deno fmt` and `deno lint --fix`.                                                                                         |
+| `doc:lint`      | Check the JSDoc comments with `deno doc --lint`.                                                                              |
+| `test`          | Run the unit tests.                                                                                                           |
+| `test:coverage` | Run the unit tests and show the test coverage.                                                                                |
+| `verify`        | Run `format:check`, `lint`, `check`, `doc:lint`, and `test`.                                                                  |
 
 ## Tests and checks
 

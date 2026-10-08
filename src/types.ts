@@ -70,6 +70,25 @@ export interface Backend {
   render(frame: FrameInfo): void;
 }
 
+/** How a child process ended. */
+export interface ProcessStatus {
+  /** `true` if the process ended with the code 0. */
+  readonly success: boolean;
+  /** The exit code of the process. */
+  readonly code: number;
+}
+
+/** A child process that the development runner started. */
+export interface ChildProcess {
+  /** The result. It is ready when the process ends. */
+  readonly status: Promise<ProcessStatus>;
+  /** Stop the process. Do nothing if it ended already. */
+  kill(): void;
+}
+
+/** A function that starts `deno` with the given arguments as a child process. */
+export type SpawnProcess = (args: readonly string[]) => ChildProcess;
+
 /** The canvas tells its delegate when to draw a frame. */
 export interface CanvasDelegate {
   /**

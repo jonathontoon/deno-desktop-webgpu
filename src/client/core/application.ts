@@ -6,8 +6,8 @@
 import { CLEAR_COLOR } from "../../constants.ts";
 import { Graphics } from "../gpu/graphics.ts";
 import { Renderer } from "../gpu/renderer.ts";
+import { Cube } from "../scene/cube.ts";
 import { Scene } from "../scene/scene.ts";
-import { Triangle } from "../scene/triangle.ts";
 import { Singleton } from "../../singleton.ts";
 import type { CanvasDelegate } from "../../types.ts";
 import { Canvas } from "./canvas.ts";
@@ -66,7 +66,7 @@ export class Application implements CanvasDelegate {
     this.graphics = new Graphics(device, this.canvas.surface);
     this.renderer = new Renderer(this.graphics, CLEAR_COLOR);
     this.scene = new Scene();
-    this.scene.add(new Triangle(this.graphics));
+    this.scene.add(new Cube(this.graphics));
     Application.holder.claim(this);
   }
 

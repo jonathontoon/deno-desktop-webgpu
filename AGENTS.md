@@ -155,21 +155,21 @@ When a Deno release has the fix, do these steps:
 3. Make `Canvas` use the native window and its surface.
 4. Change this section and the rules for changes.
 
-| Path                | Purpose                                                        |
-| ------------------- | -------------------------------------------------------------- |
-| `src/app.ts`        | Deno entry point. It opens the window and serves the page.     |
-| `src/server/`       | Runs in the Deno process. It serves the page.                  |
-| `src/constants.ts`  | Holds all fixed values.                                        |
-| `src/types.ts`      | Holds all shared types and protocols.                          |
-| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.     |
-| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page   |
-|                     | files `index.html` and `styles.css`, and these folders:        |
-| `src/client/core/`  | `Application` and `Canvas`.                                    |
-| `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                   |
-| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, and the `.wgsl` shader files. |
-| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                |
-| `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.    |
-| `deno.json`         | Deno settings, tasks, and the `cef` backend.                   |
+| Path                | Purpose                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
+| `src/server/`       | Runs in the Deno process. It serves the page.                     |
+| `src/constants.ts`  | Holds all fixed values.                                           |
+| `src/types.ts`      | Holds all shared types and protocols.                             |
+| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
+| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
+|                     | files `index.html` and `styles.css`, and these folders:           |
+| `src/client/core/`  | `Application` and `Canvas`.                                       |
+| `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                      |
+| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
+| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
+| `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.       |
+| `deno.json`         | Deno settings, tasks, and the `cef` backend.                      |
 
 ## Commands
 

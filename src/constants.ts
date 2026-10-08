@@ -10,7 +10,7 @@ export const MS_PER_SECOND = 1000;
 
 /** The title and the size of the window when the program starts. */
 export const WINDOW_OPTIONS = {
-  title: "Deno Desktop WebGPU",
+  title: "WebGPU",
   width: 800,
   height: 600,
 } as const;
@@ -30,8 +30,8 @@ export const FRAGMENT_ENTRY_POINT = "fragmentMain";
 /** The number of corner points (vertices) of a triangle. */
 export const TRIANGLE_VERTEX_COUNT = 3;
 
-/** The number of numbers that the triangle shader reads: the rotation angle and the aspect ratio of the window. */
-export const TRIANGLE_UNIFORM_FLOAT_COUNT = 2;
+/** The number of numbers that the triangle shader reads: the rotation angle, the aspect ratio of the window, and the offset to the right. */
+export const TRIANGLE_UNIFORM_FLOAT_COUNT = 3;
 
 /** The `id` of the `<canvas>` element that WebGPU draws to. */
 export const CANVAS_ELEMENT_ID = "canvas";
@@ -64,3 +64,15 @@ export const HTTP_NOT_FOUND = 404;
 export const CANVAS_OBSERVED_BOX: ResizeObserverOptions = {
   box: "device-pixel-content-box",
 };
+
+/** How far the triangle moves to the right, in screen units. A negative value moves it to the left. */
+export const TRIANGLE_OFFSET_X: number = -0.5;
+
+/** The number of corner points (vertices) of a cube: 6 faces, 2 triangles each, 3 vertices each. */
+export const CUBE_VERTEX_COUNT = 36;
+
+/** The number of numbers that the cube shader reads: the rotation angle and the aspect ratio of the window. */
+export const CUBE_UNIFORM_FLOAT_COUNT = 2;
+
+/** How fast the cube tips forward, compared with how fast it turns. */
+export const CUBE_TILT_RATIO = 0.6;

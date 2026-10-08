@@ -64,7 +64,11 @@ Deno.test("the constructor makes a pipeline with the entry points", () => {
   assertExists(descriptor.fragment);
   assertEquals(descriptor.fragment.entryPoint, FRAGMENT_ENTRY_POINT);
   assertEquals(descriptor.fragment.targets, [{ format: "rgba8unorm" }]);
-  assertEquals(descriptor.primitive, { topology: "triangle-list" });
+  assertEquals(descriptor.primitive, {
+    topology: "triangle-list",
+    cullMode: "none",
+    frontFace: "ccw",
+  });
 });
 
 Deno.test("the constructor makes a uniform buffer of the right size", () => {
@@ -126,4 +130,22 @@ Deno.test("each draw call writes the values of its own frame", () => {
   drawable.draw(pass, { time: 3, aspectRatio: 4 });
 
   assertEquals(gpu.writes.map((write) => write.data), [[1, 2], [3, 4]]);
+});
+
+Deno.test("the constructor passes the face culling to the pipeline", () => {
+  const gpu = createFakeDevice();
+  new TestPipeline({
+    device: gpu.device,
+    format: "rgba8unorm",
+    shaderCode: "// shader",
+    vertexCount: 6,
+    uniformFloatCount: 2,
+    cullMode: "back",
+    frontFace: "cw",
+  }, []);
+  assertEquals(gpu.pipelineDescriptors[0].primitive, {
+    topology: "triangle-list",
+    cullMode: "back",
+    frontFace: "cw",
+  });
 });

@@ -43,6 +43,10 @@ export interface PipelineOptions {
   readonly vertexCount: number;
   /** The number of numbers in the uniform buffer. */
   readonly uniformFloatCount: number;
+  /** Which faces the GPU does not draw. The default is `"none"`. */
+  readonly cullMode?: GPUCullMode;
+  /** Which winding order is the front of a face. The default is `"ccw"`. */
+  readonly frontFace?: GPUFrontFace;
 }
 
 /** The canvas tells its delegate when to draw a frame. */

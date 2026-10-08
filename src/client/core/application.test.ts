@@ -33,10 +33,17 @@ Deno.test("Application", async (t) => {
       assertEquals(frames.pending, 1);
     });
 
-    await t.step("the first frame draws the triangle with 3 vertices", () => {
+    await t.step("the first frame draws the cube with 36 vertices", () => {
       frames.step(0);
       assertEquals(fakeDevice.submissions.length, 1);
-      assertEquals(fakeDevice.events.includes("draw:3"), true);
+      assertEquals(fakeDevice.events.includes("draw:36"), true);
+    });
+
+    await t.step("the scene has only the cube", () => {
+      assertEquals(
+        fakeDevice.events.filter((event) => event.startsWith("draw:")),
+        ["draw:36"],
+      );
     });
 
     await t.step("shared gives the instance", () => {
@@ -61,8 +68,7 @@ Deno.test("Application", async (t) => {
       () => {
         observers.resize(fakeSurface.surface, 900, 300);
         application.canvasDidRequestFrame(2000);
-        const lastWrite = fakeDevice.writes.at(-1);
-        assertEquals(lastWrite?.data, [2, 3]);
+        assertEquals(fakeDevice.writes.at(-1)?.data, [2, 3]);
       },
     );
   } finally {

@@ -1,35 +1,35 @@
 /**
- * The `Triangle` class.
+ * The `Cube` class.
  *
  * @module
  */
 import {
+  CUBE_UNIFORM_FLOAT_COUNT,
+  CUBE_VERTEX_COUNT,
   MS_PER_SECOND,
-  TRIANGLE_OFFSET_X,
-  TRIANGLE_UNIFORM_FLOAT_COUNT,
-  TRIANGLE_VERTEX_COUNT,
 } from "../../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
 import type { FrameInfo } from "../../types.ts";
-import TRIANGLE_SHADER from "./triangle.wgsl" with { type: "text" };
+import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
 import { Pipeline } from "./pipeline.ts";
 
 /**
- * A colored triangle that turns around its center. It is on the left side of
- * the window.
+ * A 3D cube that turns and tips. Its 8 corners are the 8 colors of the RGB
+ * cube. It is in the center of the window.
  *
  * @remarks
- * The shader is in `triangle.wgsl`. It reads three numbers: the rotation
- * angle, the aspect ratio of the window, and the offset to the right.
+ * The shader is in `cube.wgsl`. It reads two numbers: the rotation angle and
+ * the aspect ratio of the window. The GPU does not draw the faces that point
+ * away from the camera, so the cube needs no depth buffer.
  *
  * @example
  * ```typescript
- * scene.add(new Triangle(graphics));
+ * scene.add(new Cube(graphics));
  * ```
  */
-export class Triangle extends Pipeline {
+export class Cube extends Pipeline {
   /**
-   * Make the triangle and its GPU objects.
+   * Make the cube and its GPU objects.
    *
    * @param graphics - The `Graphics` object. It gives the device and the pixel format.
    */
@@ -37,15 +37,16 @@ export class Triangle extends Pipeline {
     super({
       device: graphics.device,
       format: graphics.format,
-      shaderCode: TRIANGLE_SHADER,
-      vertexCount: TRIANGLE_VERTEX_COUNT,
-      uniformFloatCount: TRIANGLE_UNIFORM_FLOAT_COUNT,
+      shaderCode: CUBE_SHADER,
+      vertexCount: CUBE_VERTEX_COUNT,
+      uniformFloatCount: CUBE_UNIFORM_FLOAT_COUNT,
+      cullMode: "back",
+      frontFace: "cw",
     });
   }
 
   /**
-   * Put the rotation angle, the aspect ratio, and the offset into the uniform
-   * values.
+   * Put the rotation angle and the aspect ratio into the uniform values.
    *
    * @param frame - The data about the frame. `time` sets the angle.
    * @param uniforms - The numbers that go to the shader.
@@ -56,6 +57,5 @@ export class Triangle extends Pipeline {
   ): void {
     uniforms[0] = frame.time / MS_PER_SECOND;
     uniforms[1] = frame.aspectRatio;
-    uniforms[2] = TRIANGLE_OFFSET_X;
   }
 }

@@ -56,12 +56,19 @@ export abstract class Pipeline implements Drawable {
   /**
    * Make the pipeline, the uniform buffer, and the bind group.
    *
-   * @param options - The device, the pixel format, the shader code, and the
-   * sizes.
+   * @param options - The device, the pixel format, the shader code, the sizes,
+   * and the face culling.
    */
   public constructor(options: PipelineOptions) {
-    const { device, format, shaderCode, vertexCount, uniformFloatCount } =
-      options;
+    const {
+      device,
+      format,
+      shaderCode,
+      vertexCount,
+      uniformFloatCount,
+      cullMode = "none",
+      frontFace = "ccw",
+    } = options;
     this.device = device;
     this.vertexCount = vertexCount;
 
@@ -74,7 +81,7 @@ export abstract class Pipeline implements Drawable {
         entryPoint: FRAGMENT_ENTRY_POINT,
         targets: [{ format }],
       },
-      primitive: { topology: "triangle-list" },
+      primitive: { topology: "triangle-list", cullMode, frontFace },
     });
 
     this.uniforms = new Float32Array(uniformFloatCount);

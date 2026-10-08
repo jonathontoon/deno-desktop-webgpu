@@ -6,6 +6,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
   FRAGMENT_ENTRY_POINT,
+  TRIANGLE_OFFSET_X,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   VERTEX_ENTRY_POINT,
 } from "../../constants.ts";
@@ -34,6 +35,7 @@ Deno.test("the shader file has the entry points that the constants name", () => 
 Deno.test("the shader file has the uniform fields that the class writes", () => {
   assertStringIncludes(TRIANGLE_SHADER, "angle: f32");
   assertStringIncludes(TRIANGLE_SHADER, "aspectRatio: f32");
+  assertStringIncludes(TRIANGLE_SHADER, "offsetX: f32");
 });
 
 Deno.test("the triangle uses the shader file and the pixel format", () => {
@@ -69,4 +71,10 @@ Deno.test("the aspect ratio goes to the second uniform value", () => {
   const { gpu, triangle } = createTriangle();
   triangle.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
   assertEquals(gpu.writes[0].data[1], 1.5);
+});
+
+Deno.test("the offset goes to the third uniform value", () => {
+  const { gpu, triangle } = createTriangle();
+  triangle.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
+  assertEquals(gpu.writes[0].data[2], TRIANGLE_OFFSET_X);
 });

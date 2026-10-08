@@ -154,7 +154,9 @@ works:
 Each one implements the `Backend` protocol. `selectBackend` in
 `src/client/core/backend.ts` chooses the backend. If both fail, `Alert` shows an
 error. WebKit also has no `devicePixelContentBoxSize`, so `Canvas` falls back to
-the size in CSS pixels times `devicePixelRatio`.
+the size in CSS pixels times `devicePixelRatio`. In that case it also measures
+again when the pixel ratio changes, for example when the window moves to another
+screen.
 
 The Deno side (`src/app.ts`) opens the window and serves the page. The browser
 side (`src/client/main.ts`) runs in the page and draws.

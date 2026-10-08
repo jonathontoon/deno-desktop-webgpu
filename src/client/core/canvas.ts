@@ -21,7 +21,9 @@ import type { CanvasDelegate } from "../../types.ts";
  * new size when the window changes size, and when the window moves to a screen
  * with a different pixel ratio. Some web views, such as WebKit, cannot observe
  * the device pixel box. Then the canvas observes the box in CSS pixels and
- * multiplies it by `devicePixelRatio`. The frame loop uses `requestAnimationFrame`,
+ * multiplies it by `devicePixelRatio`. A change of the pixel ratio does not
+ * change that box, so the canvas also listens for the change of the pixel
+ * ratio. The frame loop uses `requestAnimationFrame`,
  * so the browser sets the speed of the frames and pauses them when the window
  * is hidden.
  */
@@ -69,7 +71,9 @@ export class Canvas {
   ) {
     Canvas.holder.assertEmpty();
     this.sizeObserver = new ResizeObserver((entries) => this.resize(entries));
-    this.observe(surface);
+    if (!this.observe(surface)) {
+      this.watchPixelRatio();
+    }
     Canvas.holder.claim(this);
   }
 
@@ -107,13 +111,43 @@ export class Canvas {
    * this, watch the size in CSS pixels.
    *
    * @param surface - The canvas to watch.
+   * @returns `true` if the observer watches the size in device pixels.
    */
-  private observe(surface: HTMLCanvasElement): void {
+  private observe(surface: HTMLCanvasElement): boolean {
     try {
       this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX);
+      return true;
     } catch {
       this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX_FALLBACK);
+      return false;
     }
+  }
+
+  /**
+   * Wait for the next change of the pixel ratio. Then measure the canvas again
+   * and wait for the change after it.
+   */
+  private watchPixelRatio(): void {
+    matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener(
+      "change",
+      () => {
+        this.measure();
+        this.watchPixelRatio();
+      },
+      { once: true },
+    );
+  }
+
+  /** Make the drawing surface as large as the canvas box times the pixel ratio. */
+  private measure(): void {
+    this.surface.width = Math.max(
+      1,
+      Math.round(this.surface.clientWidth * devicePixelRatio),
+    );
+    this.surface.height = Math.max(
+      1,
+      Math.round(this.surface.clientHeight * devicePixelRatio),
+    );
   }
 
   /**

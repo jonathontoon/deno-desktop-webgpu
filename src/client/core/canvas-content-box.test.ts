@@ -10,6 +10,7 @@ import { CANVAS_OBSERVED_BOX_FALLBACK } from "../../constants.ts";
 import {
   createFakeSurface,
   installFakeDevicePixelRatio,
+  installFakeMatchMedia,
   installFakeResizeObserver,
 } from "../../testing/fakes.ts";
 import { Canvas } from "./canvas.ts";
@@ -17,6 +18,8 @@ import { Canvas } from "./canvas.ts";
 Deno.test("Canvas without the device pixel box", async (t) => {
   const observers = installFakeResizeObserver(false);
   const restoreRatio = installFakeDevicePixelRatio(2);
+  const media = installFakeMatchMedia();
+  const restoreFunctions = [restoreRatio];
   try {
     const fake = createFakeSurface();
     new Canvas(fake.surface);
@@ -44,8 +47,35 @@ Deno.test("Canvas without the device pixel box", async (t) => {
       observers.resizeContent(fake.surface, 450, 150);
       assertEquals(Canvas.shared.aspectRatio, 3);
     });
+
+    await t.step(
+      "the constructor waits for a change of the pixel ratio",
+      () => {
+        assertEquals(media.queries, ["(resolution: 2dppx)"]);
+      },
+    );
+
+    await t.step("a new pixel ratio changes the size of the surface", () => {
+      fake.setClientSize(400, 300);
+      restoreFunctions.push(installFakeDevicePixelRatio(3));
+      media.change();
+      assertEquals(fake.surface.width, 1200);
+      assertEquals(fake.surface.height, 900);
+    });
+
+    await t.step("it then waits for the next change of the ratio", () => {
+      assertEquals(media.queries, [
+        "(resolution: 2dppx)",
+        "(resolution: 3dppx)",
+      ]);
+      restoreFunctions.push(installFakeDevicePixelRatio(1));
+      media.change();
+      assertEquals(fake.surface.width, 400);
+      assertEquals(fake.surface.height, 300);
+    });
   } finally {
-    restoreRatio();
+    restoreFunctions.reverse().forEach((restore) => restore());
+    media.restore();
     observers.restore();
   }
 });

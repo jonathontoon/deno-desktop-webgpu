@@ -19,42 +19,30 @@ export class Renderer {
   private static readonly holder = new Singleton<Renderer>("Renderer");
 
   /**
-   * Make the renderer.
-   *
-   * @param graphics - The `Graphics` object. It gives the device and the texture.
-   * @param clearColor - The color that fills the window before each frame.
-   * @returns The new `Renderer`.
-   * @throws {Error} When a `Renderer` exists already.
-   */
-  public static initialize(
-    graphics: Graphics,
-    clearColor: GPUColor,
-  ): Renderer {
-    return Renderer.holder.create(() => new Renderer(graphics, clearColor));
-  }
-
-  /**
    * The one instance.
    *
-   * @throws {Error} When `initialize` has not run yet.
+   * @throws {Error} When no `Renderer` exists yet.
    */
   public static get shared(): Renderer {
     return Renderer.holder.get();
   }
 
   /**
-   * Keep the `Graphics` object and the clear color. Use `initialize` to make an
-   * instance.
+   * Make the renderer.
    *
    * @param graphics - The `Graphics` object. It gives the device and the texture.
    * @param clearColor - The color that fills the window before each frame.
+   * @throws {Error} When a `Renderer` exists already.
    */
-  private constructor(
+  public constructor(
     /** The `Graphics` object. It gives the device and the texture. */
     private readonly graphics: Graphics,
     /** The color that fills the window before each frame. */
     private readonly clearColor: GPUColor,
-  ) {}
+  ) {
+    Renderer.holder.assertEmpty();
+    Renderer.holder.claim(this);
+  }
 
   /**
    * Draw one frame.

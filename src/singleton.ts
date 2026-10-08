@@ -8,10 +8,11 @@
  * Holds the one instance of a class.
  *
  * @remarks
- * Each singleton class owns one holder in a `private static` field.
- * `create` makes one instance only. It runs the factory after it checks that
- * no instance exists, so a second call has no side effect. `get` fails until
- * `create` has run.
+ * Each singleton class owns one holder in a `private static` field. The
+ * constructor of the class has two calls. The first line calls `assertEmpty`,
+ * so a second `new` fails before it does any work. The last line calls `claim`,
+ * so the holder keeps only an object that the constructor made without a
+ * failure. `get` fails until `claim` has run.
  *
  * @typeParam T - The type of the instance that the holder keeps.
  *
@@ -20,16 +21,19 @@
  * class Logger {
  *   private static readonly holder = new Singleton<Logger>("Logger");
  *
- *   public static initialize(): Logger {
- *     return Logger.holder.create(() => new Logger());
+ *   public static get shared(): Logger {
+ *     return Logger.holder.get();
  *   }
  *
- *   private constructor() {}
+ *   public constructor() {
+ *     Logger.holder.assertEmpty();
+ *     Logger.holder.claim(this);
+ *   }
  * }
  * ```
  */
 export class Singleton<T> {
-  /** The instance. It is `undefined` until `create` runs. */
+  /** The instance. It is `undefined` until `claim` runs. */
   private instance: T | undefined;
 
   /**
@@ -42,10 +46,6 @@ export class Singleton<T> {
   /**
    * Make sure that the holder is empty.
    *
-   * @remarks
-   * Call this before any slow or costly work that comes before `create`.
-   * Then a second call fails at once and does not start that work.
-   *
    * @throws {Error} When the holder already has an instance.
    */
   public assertEmpty(): void {
@@ -55,27 +55,21 @@ export class Singleton<T> {
   }
 
   /**
-   * Make the instance and keep it.
+   * Keep the instance.
    *
-   * @remarks
-   * The factory runs only when the holder is empty. If the holder has an
-   * instance, the factory does not run, so it makes no object.
-   *
-   * @param factory - The function that makes the instance.
-   * @returns The new instance.
+   * @param instance - The object that the constructor made.
    * @throws {Error} When the holder already has an instance.
    */
-  public create(factory: () => T): T {
+  public claim(instance: T): void {
     this.assertEmpty();
-    this.instance = factory();
-    return this.instance;
+    this.instance = instance;
   }
 
   /**
    * Give the instance.
    *
-   * @returns The instance that `create` kept.
-   * @throws {Error} When `create` has not run yet.
+   * @returns The instance that `claim` kept.
+   * @throws {Error} When `claim` has not run yet.
    */
   public get(): T {
     if (this.instance === undefined) {

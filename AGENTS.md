@@ -73,15 +73,18 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - Use "Object Calisthenics" only when the user asks for a strict review.
 - The skill examples use Node.js and NestJS. This project uses Deno. Use Deno
   APIs and the rules in this file.
-- A class that has exactly one instance MUST be a singleton. Give it a private
-  constructor, a `static initialize(...)` method, and a `static get shared()`
-  accessor. Create each singleton one time, in `Application.launch()`. Pass it
-  to other objects through their constructor. Do not call `shared` in the middle
-  of a method.
-- Make a singleton with `holder.create(() => new X(...))`. The factory runs only
-  when no instance exists, so a second call opens no window and uses no GPU.
-  When `initialize` does slow or costly work before `create`, call
-  `holder.assertEmpty()` as the first line.
+- A class that has exactly one instance MUST be a singleton. Give it a public
+  constructor and a `static get shared()` accessor. Do not add a static factory
+  such as `initialize`. Make each singleton with `new`, one time, in the
+  constructor of `Application`. Pass it to other objects through their
+  constructor. Do not call `shared` in the middle of a method.
+- Keep the instance in a `private static readonly holder = new Singleton<X>("X")`.
+  The first line of the constructor calls `holder.assertEmpty()`. A second `new`
+  then fails before it does any work. The last line calls `holder.claim(this)`.
+  Then the holder keeps only an object that the constructor made without a
+  failure.
+- A constructor cannot wait for a result. Do the slow work first, and give the
+  result to the constructor. Example: `new Graphics(await requestDevice(), surface)`.
 
 ### typescript-expert
 
@@ -202,7 +205,7 @@ failed check stops the commit. GitHub runs the same checks on each push
 - The tests must not need a GPU or a display. Use the fakes in
   `src/testing/fakes.ts`. Add a new fake there when a test needs one.
 - Each `*.test.ts` file runs in its own isolate. So a singleton class can be
-  initialized one time in each test file. Test the order in one `Deno.test` with
+  made one time in each test file. Test the order in one `Deno.test` with
   `t.step`.
 - Use `FakeTime` from `@std/testing/time` for timers. Use
   `installFakeAnimationFrames` for animation frames. Do not use real waits.

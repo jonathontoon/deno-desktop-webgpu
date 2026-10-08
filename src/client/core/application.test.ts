@@ -4,7 +4,7 @@
  *
  * @module
  */
-import { assertEquals, assertRejects, assertStrictEquals } from "@std/assert";
+import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
 import {
   createFakeDevice,
   createFakeSurface,
@@ -22,9 +22,13 @@ Deno.test("Application", async (t) => {
   const frames = installFakeAnimationFrames();
   const restoreGPU = installFakeNavigatorGPU({ device: fakeDevice.device });
   try {
-    const application = await Application.launch(fakeSurface.surface);
+    const application = new Application(
+      fakeSurface.surface,
+      fakeDevice.device,
+    );
+    application.start();
 
-    await t.step("launch draws nothing before the first refresh", () => {
+    await t.step("start draws nothing before the first refresh", () => {
       assertEquals(fakeDevice.submissions.length, 0);
       assertEquals(frames.pending, 1);
     });
@@ -35,13 +39,13 @@ Deno.test("Application", async (t) => {
       assertEquals(fakeDevice.events.includes("draw:3"), true);
     });
 
-    await t.step("shared gives the instance from launch", () => {
+    await t.step("shared gives the instance", () => {
       assertStrictEquals(Application.shared, application);
     });
 
-    await t.step("launch fails the second time", async () => {
-      await assertRejects(
-        () => Application.launch(createFakeSurface().surface),
+    await t.step("a second Application fails", () => {
+      assertThrows(
+        () => new Application(createFakeSurface().surface, fakeDevice.device),
         Error,
         "Application exists already.",
       );

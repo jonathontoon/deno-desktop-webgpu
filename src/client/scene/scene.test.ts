@@ -11,18 +11,18 @@ import { Scene } from "./scene.ts";
 const FRAME: FrameInfo = { time: 1000, aspectRatio: 2 };
 
 Deno.test("Scene is a singleton", async (t) => {
-  await t.step("shared fails before initialize", () => {
+  await t.step("shared fails before a Scene exists", () => {
     assertThrows(() => Scene.shared, Error, "Scene is not initialized.");
   });
 
-  const scene = Scene.initialize();
+  const scene = new Scene();
 
-  await t.step("shared gives the instance from initialize", () => {
+  await t.step("shared gives the instance", () => {
     assertStrictEquals(Scene.shared, scene);
   });
 
-  await t.step("initialize fails the second time", () => {
-    assertThrows(() => Scene.initialize(), Error, "Scene exists already.");
+  await t.step("a second Scene fails", () => {
+    assertThrows(() => new Scene(), Error, "Scene exists already.");
   });
 
   await t.step("draw with no drawable does nothing", () => {

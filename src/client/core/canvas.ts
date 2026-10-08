@@ -25,36 +25,16 @@ export class Canvas {
   private static readonly holder = new Singleton<Canvas>("Canvas");
 
   /**
-   * Take the canvas and keep its drawing surface the same size as its box in
-   * device pixels. The frame loop does not run until `start` is called.
-   *
-   * @param surface - The canvas element of the page.
-   * @returns The new `Canvas`.
-   * @throws {Error} When a `Canvas` exists already.
-   *
-   * @example
-   * ```typescript
-   * const canvas = Canvas.initialize(element);
-   * canvas.start(delegate);
-   * ```
-   */
-  public static initialize(surface: HTMLCanvasElement): Canvas {
-    return Canvas.holder.create(() => new Canvas(surface));
-  }
-
-  /**
    * The one instance.
    *
-   * @throws {Error} When `initialize` has not run yet.
+   * @throws {Error} When no `Canvas` exists yet.
    */
   public static get shared(): Canvas {
     return Canvas.holder.get();
   }
 
   /** The observer that reports the size of the canvas. */
-  private readonly sizeObserver = new ResizeObserver((entries) =>
-    this.resize(entries)
-  );
+  private readonly sizeObserver: ResizeObserver;
 
   /** `true` while the frame loop runs. */
   private running = false;
@@ -66,16 +46,26 @@ export class Canvas {
   private delegate: CanvasDelegate | undefined;
 
   /**
-   * Keep the canvas and watch its size. Use `initialize` to make an
-   * instance.
+   * Take the canvas and keep its drawing surface the same size as its box in
+   * device pixels. The frame loop does not run until `start` is called.
    *
-   * @param surface - The canvas that WebGPU draws to.
+   * @param surface - The canvas element of the page.
+   * @throws {Error} When a `Canvas` exists already.
+   *
+   * @example
+   * ```typescript
+   * const canvas = new Canvas(element);
+   * canvas.start(delegate);
+   * ```
    */
-  private constructor(
+  public constructor(
     /** The canvas that WebGPU draws to. */
     public readonly surface: HTMLCanvasElement,
   ) {
+    Canvas.holder.assertEmpty();
+    this.sizeObserver = new ResizeObserver((entries) => this.resize(entries));
     this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX);
+    Canvas.holder.claim(this);
   }
 
   /** The width of the surface divided by its height. */

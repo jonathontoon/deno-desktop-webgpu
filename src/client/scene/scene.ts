@@ -18,19 +18,9 @@ export class Scene implements Drawable {
   private static readonly holder = new Singleton<Scene>("Scene");
 
   /**
-   * Make an empty scene.
-   *
-   * @returns The new `Scene`.
-   * @throws {Error} When a `Scene` exists already.
-   */
-  public static initialize(): Scene {
-    return Scene.holder.create(() => new Scene());
-  }
-
-  /**
    * The one instance.
    *
-   * @throws {Error} When `initialize` has not run yet.
+   * @throws {Error} When no `Scene` exists yet.
    */
   public static get shared(): Scene {
     return Scene.holder.get();
@@ -39,8 +29,15 @@ export class Scene implements Drawable {
   /** The drawables, in the order that they were added. */
   private readonly drawables: Drawable[] = [];
 
-  /** Use `initialize` to make an instance. */
-  private constructor() {}
+  /**
+   * Make an empty scene.
+   *
+   * @throws {Error} When a `Scene` exists already.
+   */
+  public constructor() {
+    Scene.holder.assertEmpty();
+    Scene.holder.claim(this);
+  }
 
   /**
    * Add a drawable to the end of the list.

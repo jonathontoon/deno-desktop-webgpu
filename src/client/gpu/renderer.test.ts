@@ -13,7 +13,7 @@ const CLEAR_COLOR = { r: 0.1, g: 0.2, b: 0.3, a: 1 };
 const FRAME: FrameInfo = { time: 12, aspectRatio: 2 };
 
 Deno.test("Renderer", async (t) => {
-  await t.step("shared fails before initialize", () => {
+  await t.step("shared fails before a Renderer exists", () => {
     assertThrows(() => Renderer.shared, Error, "Renderer is not initialized.");
   });
 
@@ -23,15 +23,15 @@ Deno.test("Renderer", async (t) => {
     device: fakeDevice.device,
     currentView: () => view,
   });
-  const renderer = Renderer.initialize(graphics, CLEAR_COLOR);
+  const renderer = new Renderer(graphics, CLEAR_COLOR);
 
-  await t.step("shared gives the instance from initialize", () => {
+  await t.step("shared gives the instance", () => {
     assertStrictEquals(Renderer.shared, renderer);
   });
 
-  await t.step("initialize fails the second time", () => {
+  await t.step("a second Renderer fails", () => {
     assertThrows(
-      () => Renderer.initialize(graphics, CLEAR_COLOR),
+      () => new Renderer(graphics, CLEAR_COLOR),
       Error,
       "Renderer exists already.",
     );

@@ -26,7 +26,7 @@ function createDelegate(times: number[]): CanvasDelegate {
 }
 
 Deno.test("Canvas", async (t) => {
-  await t.step("shared fails before initialize", () => {
+  await t.step("shared fails before a Canvas exists", () => {
     assertThrows(
       () => Canvas.shared,
       Error,
@@ -37,25 +37,25 @@ Deno.test("Canvas", async (t) => {
   const observers = installFakeResizeObserver();
   const frames = installFakeAnimationFrames();
   const fake = createFakeSurface();
-  const canvas = Canvas.initialize(fake.surface);
+  const canvas = new Canvas(fake.surface);
 
-  await t.step("initialize keeps the canvas as the surface", () => {
+  await t.step("the constructor keeps the canvas as the surface", () => {
     assertStrictEquals(canvas.surface, fake.surface);
   });
 
-  await t.step("shared gives the instance from initialize", () => {
+  await t.step("shared gives the instance", () => {
     assertStrictEquals(Canvas.shared, canvas);
   });
 
-  await t.step("initialize fails the second time", () => {
+  await t.step("a second Canvas fails", () => {
     assertThrows(
-      () => Canvas.initialize(createFakeSurface().surface),
+      () => new Canvas(createFakeSurface().surface),
       Error,
       "Canvas exists already.",
     );
   });
 
-  await t.step("initialize watches the box in device pixels", () => {
+  await t.step("the constructor watches the box in device pixels", () => {
     assertEquals(observers.options.get(fake.surface), {
       box: "device-pixel-content-box",
     });

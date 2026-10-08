@@ -25,59 +25,52 @@ export class Application implements CanvasDelegate {
   private static readonly holder = new Singleton<Application>("Application");
 
   /**
-   * Set up the GPU for a canvas, and start to draw.
-   *
-   * @param element - The canvas element of the page.
-   * @returns The new `Application`.
-   * @throws {Error} When the GPU setup fails.
-   * @throws {Error} When an `Application` exists already.
-   *
-   * @example
-   * ```typescript
-   * await Application.launch(element);
-   * ```
-   */
-  public static async launch(element: HTMLCanvasElement): Promise<Application> {
-    Application.holder.assertEmpty();
-    const canvas = Canvas.initialize(element);
-    const graphics = await Graphics.initialize(canvas.surface);
-
-    const renderer = Renderer.initialize(graphics, CLEAR_COLOR);
-    const scene = Scene.initialize();
-    scene.add(new Triangle(graphics));
-
-    const application = Application.holder.create(
-      () => new Application(canvas, renderer, scene),
-    );
-    canvas.start(application);
-    return application;
-  }
-
-  /**
    * The one instance.
    *
-   * @throws {Error} When `launch` has not run yet.
+   * @throws {Error} When no `Application` exists yet.
    */
   public static get shared(): Application {
     return Application.holder.get();
   }
 
+  /** The canvas that shows the frames. */
+  private readonly canvas: Canvas;
+
+  /** The object that draws one frame. */
+  private readonly renderer: Renderer;
+
+  /** The drawables to draw in each frame. */
+  private readonly scene: Scene;
+
   /**
-   * Keep the parts. Use `launch` to make an
-   * instance.
+   * Make the other objects and connect them. The loop does not run until
+   * `start` is called.
    *
-   * @param canvas - The canvas that shows the frames.
-   * @param renderer - The object that draws one frame.
-   * @param scene - The drawables to draw in each frame.
+   * @param element - The canvas element of the page.
+   * @param device - The GPU device. Get it from `requestDevice`.
+   * @throws {Error} When the canvas gives no WebGPU context.
+   * @throws {Error} When an `Application` exists already.
+   *
+   * @example
+   * ```typescript
+   * const application = new Application(element, await requestDevice());
+   * application.start();
+   * ```
    */
-  private constructor(
-    /** The canvas that shows the frames. */
-    private readonly canvas: Canvas,
-    /** The object that draws one frame. */
-    private readonly renderer: Renderer,
-    /** The drawables to draw in each frame. */
-    private readonly scene: Scene,
-  ) {}
+  public constructor(element: HTMLCanvasElement, device: GPUDevice) {
+    Application.holder.assertEmpty();
+    this.canvas = new Canvas(element);
+    const graphics = new Graphics(device, this.canvas.surface);
+    this.renderer = new Renderer(graphics, CLEAR_COLOR);
+    this.scene = new Scene();
+    this.scene.add(new Triangle(graphics));
+    Application.holder.claim(this);
+  }
+
+  /** Start to draw. The canvas asks for a frame before each screen refresh. */
+  public start(): void {
+    this.canvas.start(this);
+  }
 
   /**
    * Draw one frame. The page shows it.

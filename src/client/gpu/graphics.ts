@@ -10,7 +10,7 @@ import { Singleton } from "../../singleton.ts";
  * Owns the GPU device and the WebGPU context of the window.
  *
  * @remarks
- * Only one instance exists. Call `Graphics.initialize` one time.
+ * Only one instance exists. Make it with `new Graphics(device, surface)`.
  * The `Renderer` and each `Drawable` use the device to make GPU objects.
  */
 export class Graphics {
@@ -18,34 +18,40 @@ export class Graphics {
   private static readonly holder = new Singleton<Graphics>("Graphics");
 
   /**
-   * Ask the system for a GPU, and connect it to the window.
+   * The one instance.
    *
+   * @throws {Error} When no `Graphics` exists yet.
+   */
+  public static get shared(): Graphics {
+    return Graphics.holder.get();
+  }
+
+  /** The WebGPU context of the window. */
+  private readonly context: GPUCanvasContext;
+
+  /** The pixel format of the window. */
+  public readonly format: GPUTextureFormat;
+
+  /**
+   * Connect the GPU device to the canvas.
+   *
+   * @param device - The GPU device that makes the GPU objects. Get it from
+   * `requestDevice`.
    * @param surface - The canvas that WebGPU draws to.
-   * @returns The new `Graphics`.
-   * @throws {Error} When the browser has no WebGPU.
-   * @throws {Error} When no WebGPU adapter exists.
-   * @throws {Error} When the window gives no WebGPU context.
+   * @throws {Error} When the canvas gives no WebGPU context.
    * @throws {Error} When a `Graphics` exists already.
    *
    * @example
    * ```typescript
-   * const graphics = await Graphics.initialize(canvas.surface);
+   * const graphics = new Graphics(await requestDevice(), canvas.surface);
    * ```
    */
-  public static async initialize(
+  public constructor(
+    /** The GPU device that makes the GPU objects. */
+    public readonly device: GPUDevice,
     surface: HTMLCanvasElement,
-  ): Promise<Graphics> {
+  ) {
     Graphics.holder.assertEmpty();
-    if (!navigator.gpu) {
-      throw new Error("WebGPU is not available.");
-    }
-    const adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) {
-      throw new Error("No WebGPU adapter is available.");
-    }
-    const device = await adapter.requestDevice();
-    const format = navigator.gpu.getPreferredCanvasFormat();
-
     // The DOM types do not list the "webgpu" context kind.
     const context = surface.getContext("webgpu") as unknown as
       | GPUCanvasContext
@@ -53,37 +59,15 @@ export class Graphics {
     if (!context) {
       throw new Error("Could not create a WebGPU context for the window.");
     }
-    context.configure({ device, format, alphaMode: CANVAS_ALPHA_MODE });
-
-    return Graphics.holder.create(
-      () => new Graphics(device, context, format),
-    );
+    this.format = navigator.gpu.getPreferredCanvasFormat();
+    context.configure({
+      device,
+      format: this.format,
+      alphaMode: CANVAS_ALPHA_MODE,
+    });
+    this.context = context;
+    Graphics.holder.claim(this);
   }
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When `initialize` has not run yet.
-   */
-  public static get shared(): Graphics {
-    return Graphics.holder.get();
-  }
-
-  /**
-   * Keep the GPU objects. Use `initialize` to make an instance.
-   *
-   * @param device - The GPU device that makes the GPU objects.
-   * @param context - The WebGPU context of the window.
-   * @param format - The pixel format of the window.
-   */
-  private constructor(
-    /** The GPU device that makes the GPU objects. */
-    public readonly device: GPUDevice,
-    /** The WebGPU context of the window. */
-    private readonly context: GPUCanvasContext,
-    /** The pixel format of the window. */
-    public readonly format: GPUTextureFormat,
-  ) {}
 
   /**
    * Give the texture of the window for the frame that is now in progress.
@@ -93,4 +77,27 @@ export class Graphics {
   public currentView(): GPUTextureView {
     return this.context.getCurrentTexture().createView();
   }
+}
+
+/**
+ * Ask the system for a GPU device.
+ *
+ * @returns The GPU device.
+ * @throws {Error} When the browser has no WebGPU.
+ * @throws {Error} When no WebGPU adapter exists.
+ *
+ * @example
+ * ```typescript
+ * const device = await requestDevice();
+ * ```
+ */
+export async function requestDevice(): Promise<GPUDevice> {
+  if (!navigator.gpu) {
+    throw new Error("WebGPU is not available.");
+  }
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) {
+    throw new Error("No WebGPU adapter is available.");
+  }
+  return adapter.requestDevice();
 }

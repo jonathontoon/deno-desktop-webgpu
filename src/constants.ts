@@ -5,16 +5,10 @@
  * @module
  */
 
-/**
- * Time between two frames, in milliseconds.
- * The value gives about 60 frames each second.
- */
-export const FRAME_MS = 1000 / 60;
-
 /** The number of milliseconds in one second. */
 export const MS_PER_SECOND = 1000;
 
-/** The title and the size (in pixels) of the window when the program starts. */
+/** The title and the size of the window when the program starts. */
 export const WINDOW_OPTIONS = {
   title: "Deno Desktop WebGPU",
   width: 800,
@@ -38,3 +32,35 @@ export const TRIANGLE_VERTEX_COUNT = 3;
 
 /** The number of numbers that the triangle shader reads: the rotation angle and the aspect ratio of the window. */
 export const TRIANGLE_UNIFORM_FLOAT_COUNT = 2;
+
+/** The `id` of the `<canvas>` element that WebGPU draws to. */
+export const CANVAS_ELEMENT_ID = "canvas";
+
+/** The `id` of the element that shows a start-up error to the user. */
+export const ERROR_ELEMENT_ID = "error";
+
+/** The path of the web page. */
+export const PAGE_PATH = "/";
+
+/** The path of the style sheet that the page loads. */
+export const STYLES_PATH = "/styles.css";
+
+/** The path of the script that the page loads. */
+export const CLIENT_SCRIPT_PATH = "/client.js";
+
+/** The media type of the web page. */
+export const HTML_CONTENT_TYPE = "text/html; charset=utf-8";
+
+/** The media type of the style sheet of the page. */
+export const CSS_CONTENT_TYPE = "text/css; charset=utf-8";
+
+/** The media type of the script of the page. */
+export const SCRIPT_CONTENT_TYPE = "text/javascript; charset=utf-8";
+
+/** The HTTP status code for a path that has no content. */
+export const HTTP_NOT_FOUND = 404;
+
+/** The box that the `ResizeObserver` of the canvas watches: device pixels. */
+export const CANVAS_OBSERVED_BOX: ResizeObserverOptions = {
+  box: "device-pixel-content-box",
+};

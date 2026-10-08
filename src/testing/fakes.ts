@@ -1,11 +1,9 @@
 /**
- * Fake GPU and window objects for the unit tests. They need no GPU and no
+ * Fake GPU and canvas objects for the unit tests. They need no GPU and no
  * display. Each fake records the calls that it receives.
  *
  * @module
  */
-import type { AppWindowOptions, NativeSurface } from "../types.ts";
-
 /**
  * Give a partial fake the type of the real object.
  *
@@ -167,25 +165,29 @@ export function createFakeDevice(): FakeDevice {
   };
 }
 
-/** A fake window surface and the records of the calls that it received. */
+/** The width of a new canvas, in pixels. A real canvas starts with it. */
+const DEFAULT_CANVAS_WIDTH = 300;
+
+/** The height of a new canvas, in pixels. A real canvas starts with it. */
+const DEFAULT_CANVAS_HEIGHT = 150;
+
+/** A fake canvas and the records of the calls that it received. */
 export interface FakeSurface {
-  /** The fake surface. Give it to the code under test. */
-  readonly surface: NativeSurface;
+  /** The fake canvas. Give it to the code under test. */
+  readonly surface: HTMLCanvasElement;
   /** The context that `getContext` gives. It is `null` when a test asks. */
   readonly context: GPUCanvasContext | null;
   /** The arguments of each `configure` call. */
   readonly configurations: GPUCanvasConfiguration[];
   /** The view that the texture of the context gives. */
   readonly view: GPUTextureView;
-  /** The number of `present` calls. */
-  presentCount: number;
 }
 
 /**
- * Make a fake window surface.
+ * Make a fake canvas.
  *
  * @param hasContext - `false` makes `getContext` give `null`.
- * @returns The surface and the records of its calls.
+ * @returns The canvas and the records of its calls.
  */
 export function createFakeSurface(hasContext = true): FakeSurface {
   const view = fake<GPUTextureView>({});
@@ -199,19 +201,16 @@ export function createFakeSurface(hasContext = true): FakeSurface {
     })
     : null;
 
+  const surface = fake<HTMLCanvasElement>({
+    width: DEFAULT_CANVAS_WIDTH,
+    height: DEFAULT_CANVAS_HEIGHT,
+    getContext: () => context,
+  });
   const record: FakeSurface = {
-    surface: fake<NativeSurface>({
-      width: 0,
-      height: 0,
-      getContext: () => context,
-      present: () => {
-        record.presentCount += 1;
-      },
-    }),
+    surface,
     context,
     configurations,
     view,
-    presentCount: 0,
   };
   return record;
 }
@@ -265,104 +264,148 @@ export function installFakeNavigatorGPU(
   };
 }
 
-/** A fake of `Deno.BrowserWindow`. A test can close it and send events. */
-export class FakeBrowserWindow {
-  /** The window that the code under test made last. */
-  public static last: FakeBrowserWindow | undefined;
-
-  /** The number of windows that the code under test made. */
-  public static count = 0;
-
-  /** `true` after the test closes the window. */
-  public closed = false;
-
-  /** The width and the height that `getSize` gives. */
-  public size: [number, number];
-
-  /** The fake surface of this window. */
-  public readonly surfaceKit: FakeSurface = createFakeSurface();
-
-  /** The listeners, by event name. */
-  private readonly listeners = new Map<string, () => void>();
-
+/** The fake `ResizeObserver` class and the records of its calls. */
+export interface FakeResizeObservers {
+  /** The options of each `observe` call, by target. */
+  readonly options: Map<Element, ResizeObserverOptions | undefined>;
   /**
-   * Make the window and remember it in `FakeBrowserWindow.last`.
+   * Send a size report to each observer that watches a target.
    *
-   * @param options - The title and the size of the window.
+   * @param target - The element that changed size.
+   * @param width - The new width, in device pixels.
+   * @param height - The new height, in device pixels.
    */
-  public constructor(public readonly options: AppWindowOptions) {
-    this.size = [options.width, options.height];
-    FakeBrowserWindow.last = this;
-    FakeBrowserWindow.count += 1;
-  }
-
-  /**
-   * Give the fake surface of this window.
-   *
-   * @returns The fake surface.
-   */
-  public getNativeWindow(): NativeSurface {
-    return this.surfaceKit.surface;
-  }
-
-  /**
-   * Give the size of the window.
-   *
-   * @returns The width and the height of the window.
-   */
-  public getSize(): [number, number] {
-    return this.size;
-  }
-
-  /**
-   * Find out if the test closed the window.
-   *
-   * @returns `true` if the test closed the window.
-   */
-  public isClosed(): boolean {
-    return this.closed;
-  }
-
-  /**
-   * Keep a listener.
-   *
-   * @param type - The name of the event.
-   * @param listener - The function to call when the event happens.
-   */
-  public addEventListener(type: string, listener: () => void): void {
-    this.listeners.set(type, listener);
-  }
-
-  /**
-   * Run the listener of an event.
-   *
-   * @param type - The name of the event.
-   */
-  public dispatch(type: string): void {
-    this.listeners.get(type)?.();
-  }
+  resize(target: Element, width: number, height: number): void;
+  /** Put the original `ResizeObserver` back. */
+  restore(): void;
 }
 
 /**
- * Replace `Deno.BrowserWindow` with `FakeBrowserWindow`.
+ * Replace `ResizeObserver` with a fake that a test can drive.
  *
- * @returns A function that puts the original value back.
+ * @returns The records of the calls, a `resize` function, and a `restore`
+ * function.
  */
-export function installFakeBrowserWindow(): () => void {
-  const target = Deno as unknown as Record<string, unknown>;
-  const original = Object.getOwnPropertyDescriptor(target, "BrowserWindow");
-  FakeBrowserWindow.last = undefined;
-  FakeBrowserWindow.count = 0;
-  Object.defineProperty(target, "BrowserWindow", {
+export function installFakeResizeObserver(): FakeResizeObservers {
+  const options = new Map<Element, ResizeObserverOptions | undefined>();
+  const callbacks = new Map<Element, ResizeObserverCallback[]>();
+
+  class FakeResizeObserver {
+    /** The function to call with the size reports. */
+    private readonly callback: ResizeObserverCallback;
+
+    /**
+     * Keep the callback.
+     *
+     * @param callback - The function to call with the size reports.
+     */
+    public constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+    }
+
+    /**
+     * Start to watch a target.
+     *
+     * @param target - The element to watch.
+     * @param observeOptions - The box to watch.
+     */
+    public observe(target: Element, observeOptions?: ResizeObserverOptions) {
+      options.set(target, observeOptions);
+      callbacks.set(target, [...(callbacks.get(target) ?? []), this.callback]);
+    }
+  }
+
+  const original = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "ResizeObserver",
+  );
+  Object.defineProperty(globalThis, "ResizeObserver", {
     configurable: true,
     writable: true,
-    value: FakeBrowserWindow,
+    value: FakeResizeObserver,
   });
-  return () => {
-    if (original) {
-      Object.defineProperty(target, "BrowserWindow", original);
-    } else {
-      delete target.BrowserWindow;
-    }
+
+  return {
+    options,
+    resize: (target, width, height) => {
+      const entry = fake<ResizeObserverEntry>({
+        target,
+        devicePixelContentBoxSize: [{ inlineSize: width, blockSize: height }],
+      });
+      for (const callback of callbacks.get(target) ?? []) {
+        callback([entry], fake<ResizeObserver>({}));
+      }
+    },
+    restore: () => {
+      if (original) {
+        Object.defineProperty(globalThis, "ResizeObserver", original);
+      } else {
+        delete (globalThis as unknown as Record<string, unknown>)
+          .ResizeObserver;
+      }
+    },
+  };
+}
+
+/** The fake animation frame functions and the records of their calls. */
+export interface FakeAnimationFrames {
+  /** The number of frame requests that wait for a screen refresh. */
+  readonly pending: number;
+  /**
+   * Run a screen refresh. It runs each waiting request one time.
+   *
+   * @param time - The time of the frame, in milliseconds.
+   */
+  step(time: number): void;
+  /** Put the original functions back. */
+  restore(): void;
+}
+
+/**
+ * Replace `requestAnimationFrame` and `cancelAnimationFrame` with fakes that a
+ * test can drive.
+ *
+ * @returns The records of the calls, a `step` function, and a `restore`
+ * function.
+ */
+export function installFakeAnimationFrames(): FakeAnimationFrames {
+  const requests = new Map<number, FrameRequestCallback>();
+  let lastId = 0;
+
+  const names = ["requestAnimationFrame", "cancelAnimationFrame"] as const;
+  const originals = names.map((name) =>
+    Object.getOwnPropertyDescriptor(globalThis, name)
+  );
+  const target = globalThis as unknown as Record<string, unknown>;
+  target.requestAnimationFrame = (callback: FrameRequestCallback): number => {
+    lastId += 1;
+    requests.set(lastId, callback);
+    return lastId;
+  };
+  target.cancelAnimationFrame = (id: number): void => {
+    requests.delete(id);
+  };
+
+  return {
+    get pending() {
+      return requests.size;
+    },
+    step: (time) => {
+      const callbacks = [...requests.values()];
+      requests.clear();
+      for (const callback of callbacks) {
+        callback(time);
+      }
+    },
+    restore: () => {
+      names.forEach((name, index) => {
+        const original = originals[index];
+        if (original) {
+          Object.defineProperty(globalThis, name, original);
+        } else {
+          delete target[name];
+        }
+      });
+    },
   };
 }

@@ -1,5 +1,5 @@
 /**
- * Unit tests for `GPUContext`.
+ * Unit tests for `Graphics`.
  *
  * @module
  */
@@ -13,16 +13,37 @@ import {
   createFakeDevice,
   createFakeSurface,
   installFakeNavigatorGPU,
-} from "../testing/fakes.ts";
-import { GPUContext } from "./gpu-context.ts";
+} from "../../testing/fakes.ts";
+import { Graphics } from "./graphics.ts";
 
-Deno.test("GPUContext", async (t) => {
+Deno.test("Graphics", async (t) => {
   await t.step("shared fails before initialize", () => {
     assertThrows(
-      () => GPUContext.shared,
+      () => Graphics.shared,
       Error,
-      "GPUContext is not initialized.",
+      "Graphics is not initialized.",
     );
+  });
+
+  await t.step("initialize fails when WebGPU is not available", async () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, "gpu");
+    Object.defineProperty(navigator, "gpu", {
+      configurable: true,
+      value: undefined,
+    });
+    try {
+      await assertRejects(
+        () => Graphics.initialize(createFakeSurface().surface),
+        Error,
+        "WebGPU is not available.",
+      );
+    } finally {
+      if (original) {
+        Object.defineProperty(navigator, "gpu", original);
+      } else {
+        delete (navigator as unknown as Record<string, unknown>).gpu;
+      }
+    }
   });
 
   await t.step("initialize fails when no adapter exists", async () => {
@@ -32,7 +53,7 @@ Deno.test("GPUContext", async (t) => {
     });
     try {
       await assertRejects(
-        () => GPUContext.initialize(createFakeSurface().surface),
+        () => Graphics.initialize(createFakeSurface().surface),
         Error,
         "No WebGPU adapter is available.",
       );
@@ -47,7 +68,7 @@ Deno.test("GPUContext", async (t) => {
     });
     try {
       await assertRejects(
-        () => GPUContext.initialize(createFakeSurface(false).surface),
+        () => Graphics.initialize(createFakeSurface(false).surface),
         Error,
         "Could not create a WebGPU context for the window.",
       );
@@ -62,16 +83,16 @@ Deno.test("GPUContext", async (t) => {
     device: fakeDevice.device,
     format: "rgba8unorm",
   });
-  let gpu: GPUContext;
+  let graphics: Graphics;
   try {
-    gpu = await GPUContext.initialize(fakeSurface.surface);
+    graphics = await Graphics.initialize(fakeSurface.surface);
   } finally {
     restore();
   }
 
   await t.step("initialize keeps the device and the pixel format", () => {
-    assertStrictEquals(gpu.device, fakeDevice.device);
-    assertEquals(gpu.format, "rgba8unorm");
+    assertStrictEquals(graphics.device, fakeDevice.device);
+    assertEquals(graphics.format, "rgba8unorm");
   });
 
   await t.step("initialize configures the context of the window", () => {
@@ -83,7 +104,7 @@ Deno.test("GPUContext", async (t) => {
   });
 
   await t.step("shared gives the instance from initialize", () => {
-    assertStrictEquals(GPUContext.shared, gpu);
+    assertStrictEquals(Graphics.shared, graphics);
   });
 
   await t.step("initialize fails the second time", async () => {
@@ -95,9 +116,9 @@ Deno.test("GPUContext", async (t) => {
     const secondSurface = createFakeSurface();
     try {
       await assertRejects(
-        () => GPUContext.initialize(secondSurface.surface),
+        () => Graphics.initialize(secondSurface.surface),
         Error,
-        "GPUContext exists already.",
+        "Graphics exists already.",
       );
     } finally {
       again();
@@ -108,6 +129,6 @@ Deno.test("GPUContext", async (t) => {
   });
 
   await t.step("currentView gives a view of the current texture", () => {
-    assertStrictEquals(gpu.currentView(), fakeSurface.view);
+    assertStrictEquals(graphics.currentView(), fakeSurface.view);
   });
 });

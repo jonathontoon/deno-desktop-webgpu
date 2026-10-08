@@ -4,9 +4,9 @@
  * @module
  */
 import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
-import { createFakeDevice, fake } from "../testing/fakes.ts";
-import type { Drawable, FrameInfo } from "../types.ts";
-import type { GPUContext } from "./gpu-context.ts";
+import { createFakeDevice, fake } from "../../testing/fakes.ts";
+import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Graphics } from "./graphics.ts";
 import { Renderer } from "./renderer.ts";
 
 const CLEAR_COLOR = { r: 0.1, g: 0.2, b: 0.3, a: 1 };
@@ -19,11 +19,11 @@ Deno.test("Renderer", async (t) => {
 
   const fakeDevice = createFakeDevice();
   const view = fake<GPUTextureView>({});
-  const gpu = fake<GPUContext>({
+  const graphics = fake<Graphics>({
     device: fakeDevice.device,
     currentView: () => view,
   });
-  const renderer = Renderer.initialize(gpu, CLEAR_COLOR);
+  const renderer = Renderer.initialize(graphics, CLEAR_COLOR);
 
   await t.step("shared gives the instance from initialize", () => {
     assertStrictEquals(Renderer.shared, renderer);
@@ -31,7 +31,7 @@ Deno.test("Renderer", async (t) => {
 
   await t.step("initialize fails the second time", () => {
     assertThrows(
-      () => Renderer.initialize(gpu, CLEAR_COLOR),
+      () => Renderer.initialize(graphics, CLEAR_COLOR),
       Error,
       "Renderer exists already.",
     );

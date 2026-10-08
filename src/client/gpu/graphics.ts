@@ -1,39 +1,44 @@
 /**
- * The `GPUContext` class.
+ * The `Graphics` class.
  *
  * @module
  */
-import { CANVAS_ALPHA_MODE } from "../constants.ts";
-import { Singleton } from "../singleton.ts";
-import type { NativeSurface } from "../types.ts";
+import { CANVAS_ALPHA_MODE } from "../../constants.ts";
+import { Singleton } from "../../singleton.ts";
 
 /**
  * Owns the GPU device and the WebGPU context of the window.
  *
  * @remarks
- * Only one instance exists. Call `GPUContext.initialize` one time.
+ * Only one instance exists. Call `Graphics.initialize` one time.
  * The `Renderer` and each `Drawable` use the device to make GPU objects.
  */
-export class GPUContext {
+export class Graphics {
   /** Keeps the one instance. */
-  private static readonly holder = new Singleton<GPUContext>("GPUContext");
+  private static readonly holder = new Singleton<Graphics>("Graphics");
 
   /**
    * Ask the system for a GPU, and connect it to the window.
    *
-   * @param surface - The native surface of the window.
-   * @returns The new `GPUContext`.
+   * @param surface - The canvas that WebGPU draws to.
+   * @returns The new `Graphics`.
+   * @throws {Error} When the browser has no WebGPU.
    * @throws {Error} When no WebGPU adapter exists.
    * @throws {Error} When the window gives no WebGPU context.
-   * @throws {Error} When a `GPUContext` exists already.
+   * @throws {Error} When a `Graphics` exists already.
    *
    * @example
    * ```typescript
-   * const gpu = await GPUContext.initialize(appWindow.surface);
+   * const graphics = await Graphics.initialize(canvas.surface);
    * ```
    */
-  public static async initialize(surface: NativeSurface): Promise<GPUContext> {
-    GPUContext.holder.assertEmpty();
+  public static async initialize(
+    surface: HTMLCanvasElement,
+  ): Promise<Graphics> {
+    Graphics.holder.assertEmpty();
+    if (!navigator.gpu) {
+      throw new Error("WebGPU is not available.");
+    }
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) {
       throw new Error("No WebGPU adapter is available.");
@@ -41,14 +46,17 @@ export class GPUContext {
     const device = await adapter.requestDevice();
     const format = navigator.gpu.getPreferredCanvasFormat();
 
-    const context = surface.getContext("webgpu") as GPUCanvasContext | null;
+    // The DOM types do not list the "webgpu" context kind.
+    const context = surface.getContext("webgpu") as unknown as
+      | GPUCanvasContext
+      | null;
     if (!context) {
       throw new Error("Could not create a WebGPU context for the window.");
     }
     context.configure({ device, format, alphaMode: CANVAS_ALPHA_MODE });
 
-    return GPUContext.holder.create(
-      () => new GPUContext(device, context, format),
+    return Graphics.holder.create(
+      () => new Graphics(device, context, format),
     );
   }
 
@@ -57,8 +65,8 @@ export class GPUContext {
    *
    * @throws {Error} When `initialize` has not run yet.
    */
-  public static get shared(): GPUContext {
-    return GPUContext.holder.get();
+  public static get shared(): Graphics {
+    return Graphics.holder.get();
   }
 
   /**

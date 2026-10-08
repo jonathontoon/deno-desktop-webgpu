@@ -1,5 +1,5 @@
 /**
- * Unit tests for `TriangleDrawable` and its shader file.
+ * Unit tests for `Triangle` and its shader file.
  *
  * @module
  */
@@ -8,22 +8,22 @@ import {
   FRAGMENT_ENTRY_POINT,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   VERTEX_ENTRY_POINT,
-} from "../constants.ts";
-import type { GPUContext } from "../gpu/gpu-context.ts";
-import { createFakeDevice, fake } from "../testing/fakes.ts";
+} from "../../constants.ts";
+import type { Graphics } from "../gpu/graphics.ts";
+import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import TRIANGLE_SHADER from "./triangle.wgsl" with { type: "text" };
-import { TriangleDrawable } from "./triangle-drawable.ts";
+import { Triangle } from "./triangle.ts";
 
 const FLOAT_BYTES = 4;
 
 /** Make a triangle with a fake device. */
 function createTriangle() {
   const gpu = createFakeDevice();
-  const context = fake<GPUContext>({
+  const context = fake<Graphics>({
     device: gpu.device,
     format: "bgra8unorm",
   });
-  return { gpu, triangle: new TriangleDrawable(context) };
+  return { gpu, triangle: new Triangle(context) };
 }
 
 Deno.test("the shader file has the entry points that the constants name", () => {

@@ -1,10 +1,10 @@
 /**
- * The `PipelineDrawable` base class.
+ * The `Pipeline` base class.
  *
  * @module
  */
-import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../constants.ts";
-import type { Drawable, FrameInfo, PipelineDrawableOptions } from "../types.ts";
+import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../../constants.ts";
+import type { Drawable, FrameInfo, PipelineOptions } from "../../types.ts";
 
 /**
  * Base class for a drawable that uses one render pipeline and one uniform
@@ -17,11 +17,11 @@ import type { Drawable, FrameInfo, PipelineDrawableOptions } from "../types.ts";
  *
  * @example
  * ```typescript
- * class PulseDrawable extends PipelineDrawable {
- *   public constructor(gpu: GPUContext) {
+ * class Pulse extends Pipeline {
+ *   public constructor(graphics: Graphics) {
  *     super({
- *       device: gpu.device,
- *       format: gpu.format,
+ *       device: graphics.device,
+ *       format: graphics.format,
  *       shaderCode: PULSE_SHADER,
  *       vertexCount: 3,
  *       uniformFloatCount: 1,
@@ -34,7 +34,7 @@ import type { Drawable, FrameInfo, PipelineDrawableOptions } from "../types.ts";
  * }
  * ```
  */
-export abstract class PipelineDrawable implements Drawable {
+export abstract class Pipeline implements Drawable {
   /** The GPU device that owns the GPU objects. */
   private readonly device: GPUDevice;
 
@@ -59,7 +59,7 @@ export abstract class PipelineDrawable implements Drawable {
    * @param options - The device, the pixel format, the shader code, and the
    * sizes.
    */
-  public constructor(options: PipelineDrawableOptions) {
+  public constructor(options: PipelineOptions) {
     const { device, format, shaderCode, vertexCount, uniformFloatCount } =
       options;
     this.device = device;

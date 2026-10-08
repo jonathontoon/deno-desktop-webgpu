@@ -5,19 +5,6 @@
  * @module
  */
 
-/** The native surface of the window. WebGPU draws to it. */
-export type NativeSurface = ReturnType<Deno.BrowserWindow["getNativeWindow"]>;
-
-/** The values that the program uses to open a window. */
-export interface AppWindowOptions {
-  /** The text in the title bar of the window. */
-  readonly title: string;
-  /** The width of the window, in pixels. */
-  readonly width: number;
-  /** The height of the window, in pixels. */
-  readonly height: number;
-}
-
 /** The data about one frame. A `Drawable` uses it to draw the frame. */
 export interface FrameInfo {
   /** The time, in milliseconds. */
@@ -30,7 +17,7 @@ export interface FrameInfo {
  * An object that records its draw calls in a render pass.
  *
  * @remarks
- * A `Scene` and a `PipelineDrawable` both implement this protocol.
+ * A `Scene` and a `Pipeline` both implement this protocol.
  * Because of this, the `Renderer` can draw one object or a list of objects
  * in the same way.
  */
@@ -44,8 +31,8 @@ export interface Drawable {
   draw(pass: GPURenderPassEncoder, frame: FrameInfo): void;
 }
 
-/** The values that a `PipelineDrawable` needs to build its GPU objects. */
-export interface PipelineDrawableOptions {
+/** The values that a `Pipeline` needs to build its GPU objects. */
+export interface PipelineOptions {
   /** The GPU device that makes the GPU objects. */
   readonly device: GPUDevice;
   /** The pixel format of the window. */
@@ -58,18 +45,12 @@ export interface PipelineDrawableOptions {
   readonly uniformFloatCount: number;
 }
 
-/** The window tells its delegate about events. */
-export interface WindowDelegate {
-  /** The user closed the window. */
-  windowDidClose(): void;
-}
-
-/** The render loop tells its delegate when to draw a frame. */
-export interface RenderLoopDelegate {
+/** The canvas tells its delegate when to draw a frame. */
+export interface CanvasDelegate {
   /**
-   * The loop asks for a frame. Draw one frame now.
+   * The canvas asks for a frame. Draw one frame now.
    *
    * @param time - The time, in milliseconds.
    */
-  renderLoopDidRequestFrame(time: number): void;
+  canvasDidRequestFrame(time: number): void;
 }

@@ -1,5 +1,5 @@
 /**
- * The `TriangleDrawable` class.
+ * The `Triangle` class.
  *
  * @module
  */
@@ -7,11 +7,11 @@ import {
   MS_PER_SECOND,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   TRIANGLE_VERTEX_COUNT,
-} from "../constants.ts";
-import type { GPUContext } from "../gpu/gpu-context.ts";
-import type { FrameInfo } from "../types.ts";
+} from "../../constants.ts";
+import type { Graphics } from "../gpu/graphics.ts";
+import type { FrameInfo } from "../../types.ts";
 import TRIANGLE_SHADER from "./triangle.wgsl" with { type: "text" };
-import { PipelineDrawable } from "./pipeline-drawable.ts";
+import { Pipeline } from "./pipeline.ts";
 
 /**
  * A colored triangle that turns around its center.
@@ -22,19 +22,19 @@ import { PipelineDrawable } from "./pipeline-drawable.ts";
  *
  * @example
  * ```typescript
- * scene.add(new TriangleDrawable(gpu));
+ * scene.add(new Triangle(graphics));
  * ```
  */
-export class TriangleDrawable extends PipelineDrawable {
+export class Triangle extends Pipeline {
   /**
    * Make the triangle and its GPU objects.
    *
-   * @param gpu - The GPU context that gives the device and the pixel format.
+   * @param graphics - The `Graphics` object. It gives the device and the pixel format.
    */
-  public constructor(gpu: GPUContext) {
+  public constructor(graphics: Graphics) {
     super({
-      device: gpu.device,
-      format: gpu.format,
+      device: graphics.device,
+      format: graphics.format,
       shaderCode: TRIANGLE_SHADER,
       vertexCount: TRIANGLE_VERTEX_COUNT,
       uniformFloatCount: TRIANGLE_UNIFORM_FLOAT_COUNT,

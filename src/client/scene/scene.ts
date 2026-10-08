@@ -3,8 +3,8 @@
  *
  * @module
  */
-import { Singleton } from "../singleton.ts";
-import type { Drawable, FrameInfo } from "../types.ts";
+import { Singleton } from "../../singleton.ts";
+import type { Drawable, FrameInfo } from "../../types.ts";
 
 /**
  * A list of drawables. It draws them in the order that they were added.
@@ -49,7 +49,7 @@ export class Scene implements Drawable {
    *
    * @example
    * ```typescript
-   * scene.add(new TriangleDrawable(gpu));
+   * scene.add(new Triangle(graphics));
    * ```
    */
   public add(drawable: Drawable): void {

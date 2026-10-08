@@ -3,9 +3,9 @@
  *
  * @module
  */
-import { Singleton } from "../singleton.ts";
-import type { Drawable, FrameInfo } from "../types.ts";
-import type { GPUContext } from "./gpu-context.ts";
+import { Singleton } from "../../singleton.ts";
+import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Graphics } from "./graphics.ts";
 
 /**
  * Draws one frame: it clears the window and then runs a drawable.
@@ -21,16 +21,16 @@ export class Renderer {
   /**
    * Make the renderer.
    *
-   * @param gpu - The GPU context that gives the device and the window texture.
+   * @param graphics - The `Graphics` object. It gives the device and the texture.
    * @param clearColor - The color that fills the window before each frame.
    * @returns The new `Renderer`.
    * @throws {Error} When a `Renderer` exists already.
    */
   public static initialize(
-    gpu: GPUContext,
+    graphics: Graphics,
     clearColor: GPUColor,
   ): Renderer {
-    return Renderer.holder.create(() => new Renderer(gpu, clearColor));
+    return Renderer.holder.create(() => new Renderer(graphics, clearColor));
   }
 
   /**
@@ -43,15 +43,15 @@ export class Renderer {
   }
 
   /**
-   * Keep the GPU context and the clear color. Use `initialize` to make an
+   * Keep the `Graphics` object and the clear color. Use `initialize` to make an
    * instance.
    *
-   * @param gpu - The GPU context that gives the device and the window texture.
+   * @param graphics - The `Graphics` object. It gives the device and the texture.
    * @param clearColor - The color that fills the window before each frame.
    */
   private constructor(
-    /** The GPU context that gives the device and the window texture. */
-    private readonly gpu: GPUContext,
+    /** The `Graphics` object. It gives the device and the texture. */
+    private readonly graphics: Graphics,
     /** The color that fills the window before each frame. */
     private readonly clearColor: GPUColor,
   ) {}
@@ -68,11 +68,11 @@ export class Renderer {
    * ```
    */
   public render(drawable: Drawable, frame: FrameInfo): void {
-    const { device } = this.gpu;
+    const { device } = this.graphics;
     const encoder = device.createCommandEncoder();
     const pass = encoder.beginRenderPass({
       colorAttachments: [{
-        view: this.gpu.currentView(),
+        view: this.graphics.currentView(),
         clearValue: this.clearColor,
         loadOp: "clear",
         storeOp: "store",

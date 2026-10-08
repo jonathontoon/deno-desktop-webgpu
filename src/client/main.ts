@@ -8,7 +8,7 @@
 import { CANVAS_ELEMENT_ID, ERROR_ELEMENT_ID } from "../constants.ts";
 import { Application } from "./core/application.ts";
 import { requestDevice } from "./gpu/graphics.ts";
-import { showFailure } from "./failure.ts";
+import { Alert } from "./core/alert.ts";
 
 const canvas = document.getElementById(CANVAS_ELEMENT_ID);
 const message = document.getElementById(ERROR_ELEMENT_ID);
@@ -18,8 +18,9 @@ if (!(canvas instanceof HTMLCanvasElement) || !message) {
   );
 }
 
+const errorAlert = new Alert(message);
 try {
   new Application(canvas, await requestDevice()).start();
 } catch (error) {
-  showFailure(error, message);
+  errorAlert.show(error);
 }

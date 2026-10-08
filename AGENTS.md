@@ -164,7 +164,7 @@ When a Deno release has the fix, do these steps:
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
 | `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
 |                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application` and `Canvas`.                                       |
+| `src/client/core/`  | `Application`, `Canvas`, and `Alert`.                             |
 | `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                      |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |

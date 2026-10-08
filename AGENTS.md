@@ -106,9 +106,14 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 
 ### Code style
 
-- Write acronyms in all capitals in names. Example: `GPUContext`, not
-  `GpuContext`.
-- Use hyphens in file names. Example: `app-window.ts`. Do not use underscores.
+- Write acronyms in all capitals in names. Example: `GPUBuffer`, not
+  `GpuBuffer`.
+- Give each class and each file a name of one word. Example: `canvas.ts` has the
+  class `Canvas`. Do not add a word for the kind of class, such as `Drawable`.
+  Example: `Triangle`, not `TriangleDrawable`. The name of a protocol (an
+  `interface`) can have a kind word, such as `Drawable` or `CanvasDelegate`.
+- If a file name must have more than one word, use hyphens. Do not use
+  underscores.
 - Use TypeScript patterns, not JavaScript patterns. Use the keywords `private`,
   `protected`, `readonly`, `abstract`, and `override`. Do not use `#` private
   fields. Do not use `any`. Write the return type of each method.
@@ -124,40 +129,64 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 ## Project
 
 This is a Deno desktop application. All of its output is WebGPU rendering.
-It uses the `raw` backend. The `raw` backend gives a native window with no web
-engine. There is no webview, no HTML, and no DOM. The code in `src/` draws
-to the window directly with WebGPU.
+It uses the `cef` backend. The `cef` backend puts a Chromium web view in the
+native window. The page has one `<canvas>` element. The code in `src/` draws to
+the canvas with WebGPU.
 
-| Path               | Purpose                                                      |
-| ------------------ | ------------------------------------------------------------ |
-| `src/app.ts`       | Entry point. It calls `Application.launch()`.                |
-| `src/constants.ts` | Holds all fixed values.                                      |
-| `src/types.ts`     | Holds all shared types and protocols.                        |
-| `src/core/`        | `Application`, `AppWindow`, and `RenderLoop`.                |
-| `src/gpu/`         | `GPUContext` and `Renderer`. They use the GPU.               |
-| `src/scene/`       | `Scene`, the drawable classes, and the `.wgsl` shader files. |
-| `src/testing/`     | Fake GPU and window objects for the unit tests.              |
-| `src/**/*.test.ts` | The unit tests. Each one is next to the file that it tests.  |
-| `deno.json`        | Deno settings, tasks, and the `raw` backend.                 |
+The Deno side (`src/app.ts`) opens the window and serves the page. The browser
+side (`src/client/main.ts`) runs in the page and draws.
+
+### TODO: go back to the `raw` backend
+
+The `raw` backend gives a native window with no web engine. It is the goal of
+this project. It does not work on macOS now. Deno makes the window surface on
+the wrong thread, and the program stops with
+`can only access NSView on the main thread`. See
+[denoland/deno#36738](https://github.com/denoland/deno/issues/36738). The fix is
+the pull request [denoland/deno#36756](https://github.com/denoland/deno/pull/36756).
+When a Deno release has the fix, do these steps:
+
+1. Set `"backend": "raw"` in `deno.json`.
+2. Use `Deno.BrowserWindow` and `getNativeWindow()` for the surface. Remove
+   `src/server/`, the page files in `src/client/`, and the `bundle` task.
+3. Make `Canvas` use the native window and its surface.
+4. Change this section and the rules for changes.
+
+| Path                | Purpose                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| `src/app.ts`        | Deno entry point. It opens the window and serves the page.     |
+| `src/server/`       | Runs in the Deno process. It serves the page.                  |
+| `src/constants.ts`  | Holds all fixed values.                                        |
+| `src/types.ts`      | Holds all shared types and protocols.                          |
+| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.     |
+| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page   |
+|                     | files `index.html` and `styles.css`, and these folders:        |
+| `src/client/core/`  | `Application` and `Canvas`.                                    |
+| `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                   |
+| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, and the `.wgsl` shader files. |
+| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                |
+| `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.    |
+| `deno.json`         | Deno settings, tasks, and the `cef` backend.                   |
 
 ## Commands
 
 Run all commands with `deno task <name>`.
 
-| Task            | What it does                                                                   |
-| --------------- | ------------------------------------------------------------------------------ |
-| `dev`           | Start the desktop app with hot module reloading.                               |
-| `build`         | Build the desktop app.                                                         |
-| `check`         | Check the types of `src/app.ts` and of the tests, with the desktop type files. |
-| `lint`          | Run `deno lint`.                                                               |
-| `lint:fix`      | Run `deno lint --fix`.                                                         |
-| `format`        | Format all files with `deno fmt`.                                              |
-| `format:check`  | Check the format. It changes no file.                                          |
-| `fix`           | Run `deno fmt` and `deno lint --fix`.                                          |
-| `doc:lint`      | Check the JSDoc comments with `deno doc --lint`.                               |
-| `test`          | Run the unit tests.                                                            |
-| `test:coverage` | Run the unit tests and show the test coverage.                                 |
-| `verify`        | Run `format:check`, `lint`, `check`, `doc:lint`, and `test`.                   |
+| Task            | What it does                                                    |
+| --------------- | --------------------------------------------------------------- |
+| `bundle`        | Bundle `src/client/main.ts` into `dist/client.js` for the page. |
+| `dev`           | Bundle, then start the desktop app with hot module reloading.   |
+| `build`         | Bundle, then build the desktop app.                             |
+| `check`         | Bundle, then check the types of `src/app.ts` and of the tests.  |
+| `lint`          | Run `deno lint`.                                                |
+| `lint:fix`      | Run `deno lint --fix`.                                          |
+| `format`        | Format all files with `deno fmt`.                               |
+| `format:check`  | Check the format. It changes no file.                           |
+| `fix`           | Run `deno fmt` and `deno lint --fix`.                           |
+| `doc:lint`      | Check the JSDoc comments with `deno doc --lint`.                |
+| `test`          | Run the unit tests.                                             |
+| `test:coverage` | Run the unit tests and show the test coverage.                  |
+| `verify`        | Run `format:check`, `lint`, `check`, `doc:lint`, and `test`.    |
 
 ## Tests and checks
 
@@ -175,7 +204,8 @@ failed check stops the commit. GitHub runs the same checks on each push
 - Each `*.test.ts` file runs in its own isolate. So a singleton class can be
   initialized one time in each test file. Test the order in one `Deno.test` with
   `t.step`.
-- Use `FakeTime` from `@std/testing/time` for timers. Do not use real waits.
+- Use `FakeTime` from `@std/testing/time` for timers. Use
+  `installFakeAnimationFrames` for animation frames. Do not use real waits.
 - Give each test file and each export of `src/testing/` a JSDoc comment. The
   command `deno task doc:lint` checks them.
 - `deno doc --lint` does not flag an undocumented export if it is the first
@@ -194,10 +224,14 @@ failed check stops the commit. GitHub runs the same checks on each push
    Always end statements with a semicolon. Always use double quotes for strings.
    The `fmt` and `lint` sections of `deno.json` set these rules.
 3. Do not edit files in `.agents/` or `.claude/skills/` by hand.
-4. Do not add a web page, a webview, or the `cef` backend. Keep `"backend": "raw"`.
+4. Keep `"backend": "cef"` in `deno.json` until the TODO in "Project" is done.
+   The page must have only one `<canvas>`. Do not add other page content.
 5. Keep `"unstable": ["webgpu"]` in `deno.json`. WebGPU needs it.
-6. The `raw` backend has no `requestAnimationFrame`. Use the `setTimeout` loop.
+6. The frame loop in `Canvas` uses `requestAnimationFrame`. The unit tests use
+   the fake functions from `installFakeAnimationFrames` in `src/testing/fakes.ts`.
 7. Keep all code in `src/`. The entry point is `src/app.ts`. Do not add a root `main.ts`.
+   The browser code is bundled to `dist/client.js` by `deno task bundle`. Do
+   not commit `dist/`.
 8. Write shader code in `.wgsl` files in `src/`. Import them as text:
    `import CODE from "./file.wgsl" with { type: "text" };`
    Do not put shader code in `.ts` files.

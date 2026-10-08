@@ -1,8 +1,11 @@
 # Deno Desktop WebGPU
 
-A Deno desktop application that draws with WebGPU. It uses the `raw` backend.
-This backend gives a native window with no web engine. The code draws to the
-window directly.
+A Deno desktop application that draws with WebGPU. It uses the `cef` backend.
+This backend puts a Chromium web view in the native window. The page has one
+canvas, and the code draws to it.
+
+The goal is the `raw` backend, which has no web engine. The `raw` backend does
+not work on macOS now. See the TODO in `AGENTS.md`.
 
 ## Set up
 
@@ -14,31 +17,36 @@ You need a computer with a GPU that supports WebGPU.
 
 ## Use
 
-| Command            | What it does                                           |
-| ------------------ | ------------------------------------------------------ |
-| `deno task dev`    | Start the app with hot reloading.                      |
-| `deno task build`  | Build the app. The output goes to `dist/`.             |
-| `deno task test`   | Run the unit tests.                                    |
-| `deno task verify` | Run all checks: format, lint, types, JSDoc, and tests. |
-| `deno task fix`    | Fix the format and the lint problems.                  |
-| `deno task lint`   | Run `deno lint`.                                       |
-| `deno task format` | Format all files with `deno fmt`.                      |
+| Command            | What it does                                            |
+| ------------------ | ------------------------------------------------------- |
+| `deno task bundle` | Bundle the page script into `dist/client.js`.           |
+| `deno task dev`    | Bundle, then start the app with hot reloading.          |
+| `deno task build`  | Bundle, then build the app. The output goes to `dist/`. |
+| `deno task test`   | Run the unit tests.                                     |
+| `deno task verify` | Run all checks: format, lint, types, JSDoc, and tests.  |
+| `deno task fix`    | Fix the format and the lint problems.                   |
+| `deno task lint`   | Run `deno lint`.                                        |
+| `deno task format` | Format all files with `deno fmt`.                       |
 
 `deno desktop` is an experimental Deno command. Its options can change.
 
 ## Files
 
-| File               | Purpose                                                      |
-| ------------------ | ------------------------------------------------------------ |
-| `src/app.ts`       | Entry point. It calls `Application.launch()`.                |
-| `src/constants.ts` | Holds all fixed values.                                      |
-| `src/types.ts`     | Holds all shared types and protocols.                        |
-| `src/core/`        | `Application`, `AppWindow`, and `RenderLoop`.                |
-| `src/gpu/`         | `GPUContext` and `Renderer`. They use the GPU.               |
-| `src/scene/`       | `Scene`, the drawable classes, and the `.wgsl` shader files. |
-| `src/testing/`     | Fake GPU and window objects for the unit tests.              |
-| `src/**/*.test.ts` | The unit tests.                                              |
-| `deno.json`        | Settings. It selects the `raw` backend.                      |
+| File                | Purpose                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| `src/app.ts`        | Deno entry point. It opens the window and serves the page.     |
+| `src/server/`       | Runs in the Deno process. It serves the page.                  |
+| `src/constants.ts`  | Holds all fixed values.                                        |
+| `src/types.ts`      | Holds all shared types and protocols.                          |
+| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.     |
+| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page   |
+|                     | files `index.html` and `styles.css`, and these folders:        |
+| `src/client/core/`  | `Application` and `Canvas`.                                    |
+| `src/client/gpu/`   | `Graphics` and `Renderer`. They use the GPU.                   |
+| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, and the `.wgsl` shader files. |
+| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                |
+| `src/**/*.test.ts`  | The unit tests.                                                |
+| `deno.json`         | Settings. It selects the `cef` backend.                        |
 
 ## Agents
 

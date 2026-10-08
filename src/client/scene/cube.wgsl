@@ -20,7 +20,7 @@ struct VertexOutput {
 // Half of the length of one edge of the cube.
 const HALF_EDGE = 0.4;
 // The distance from the camera to the center of the cube.
-const CAMERA_DISTANCE = 3.0;
+const CAMERA_DISTANCE = 2.0;
 // The planes that cut the view. The GPU draws only what is between them.
 const NEAR = 0.1;
 const FAR = 10.0;

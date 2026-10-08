@@ -6,13 +6,14 @@
 import { Singleton } from "../../singleton.ts";
 import type { Backend, CanvasDelegate } from "../../types.ts";
 import { Canvas } from "./canvas.ts";
+import type { Meter } from "./meter.ts";
 
 /**
  * Connects the canvas to the backend. It is the delegate of the canvas.
  *
  * @remarks
- * Only one instance exists. It makes the `Canvas` and gives each frame request
- * to the backend.
+ * Only one instance exists. It makes the `Canvas`, counts each frame with the
+ * `Meter`, and gives each frame request to the backend.
  */
 export class Application implements CanvasDelegate {
   /** Keeps the one instance. */
@@ -36,11 +37,12 @@ export class Application implements CanvasDelegate {
    *
    * @param element - The canvas element of the page.
    * @param backend - The object that draws each frame on the canvas.
+   * @param meter - The object that counts the frames.
    * @throws {Error} When an `Application` exists already.
    *
    * @example
    * ```typescript
-   * const application = new Application(element, await selectBackend(element));
+   * const application = new Application(element, backend, meter);
    * application.start();
    * ```
    */
@@ -48,6 +50,8 @@ export class Application implements CanvasDelegate {
     element: HTMLCanvasElement,
     /** The object that draws each frame on the canvas. */
     private readonly backend: Backend,
+    /** The object that counts the frames. */
+    private readonly meter: Meter,
   ) {
     Application.holder.assertEmpty();
     this.canvas = new Canvas(element);
@@ -65,6 +69,7 @@ export class Application implements CanvasDelegate {
    * @param time - The time, in milliseconds.
    */
   public canvasDidRequestFrame(time: number): void {
+    this.meter.record(time);
     this.backend.render({ time, aspectRatio: this.canvas.aspectRatio });
   }
 }

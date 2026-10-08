@@ -42,6 +42,12 @@ export const ERROR_ELEMENT_ID = "error";
 /** The `id` of the element that shows the name of the drawing method. */
 export const BACKEND_ELEMENT_ID = "backend";
 
+/** The `id` of the element that shows the number of frames each second. */
+export const FPS_ELEMENT_ID = "fps";
+
+/** How long the meter counts frames before it shows a number, in milliseconds. */
+export const FPS_INTERVAL_MS = 500;
+
 /** The path of the web page. */
 export const PAGE_PATH = "/";
 

@@ -8,11 +8,13 @@ import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
 import type { Backend, FrameInfo } from "../../types.ts";
 import {
   createFakeSurface,
+  fake,
   installFakeAnimationFrames,
   installFakeResizeObserver,
 } from "../../testing/fakes.ts";
 import { Application } from "./application.ts";
 import { Canvas } from "./canvas.ts";
+import { Meter } from "./meter.ts";
 
 /** Make a backend that records the frames that it gets. */
 function createBackend(frames: FrameInfo[]): Backend {
@@ -21,6 +23,8 @@ function createBackend(frames: FrameInfo[]): Backend {
 
 Deno.test("Application", async (t) => {
   const drawn: FrameInfo[] = [];
+  const rate = fake<HTMLElement>({ textContent: "" });
+  const meter = new Meter(rate);
   const fakeSurface = createFakeSurface();
   const observers = installFakeResizeObserver();
   const frames = installFakeAnimationFrames();
@@ -28,6 +32,7 @@ Deno.test("Application", async (t) => {
     const application = new Application(
       fakeSurface.surface,
       createBackend(drawn),
+      meter,
     );
 
     await t.step("the constructor starts no loop", () => {
@@ -52,6 +57,14 @@ Deno.test("Application", async (t) => {
       assertEquals(drawn.at(-1), { time: 2000, aspectRatio: 3 });
     });
 
+    await t.step("each frame goes to the meter", () => {
+      // The meter shows the rate after an interval of frames.
+      for (let time = 2010; time <= 2500; time += 10) {
+        application.canvasDidRequestFrame(time);
+      }
+      assertEquals(rate.textContent, "100 FPS");
+    });
+
     await t.step("shared gives the instance", () => {
       assertStrictEquals(Application.shared, application);
     });
@@ -59,7 +72,11 @@ Deno.test("Application", async (t) => {
     await t.step("a second Application fails", () => {
       assertThrows(
         () =>
-          new Application(createFakeSurface().surface, createBackend(drawn)),
+          new Application(
+            createFakeSurface().surface,
+            createBackend(drawn),
+            meter,
+          ),
         Error,
         "Application exists already.",
       );

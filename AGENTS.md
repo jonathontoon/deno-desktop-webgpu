@@ -181,7 +181,7 @@ When a Deno release has the fix, do these steps:
 | `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
 | `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
 |                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, `Alert`, and `selectBackend`.            |
+| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, and `selectBackend`.   |
 | `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
 | `src/client/gl/`    | The WebGL2 backend: `WebGL2` and the `.glsl` shaders.             |
 | `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |

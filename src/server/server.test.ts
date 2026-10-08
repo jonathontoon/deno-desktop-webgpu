@@ -10,6 +10,7 @@ import {
   CLEAR_COLOR,
   CLIENT_SCRIPT_PATH,
   ERROR_ELEMENT_ID,
+  FPS_ELEMENT_ID,
   HTTP_NOT_FOUND,
   PAGE_PATH,
   STYLES_PATH,
@@ -30,6 +31,10 @@ Deno.test("index.html", async (t) => {
 
   await t.step("has the element for the name of the drawing method", () => {
     assertStringIncludes(INDEX_HTML, `id="${BACKEND_ELEMENT_ID}"`);
+  });
+
+  await t.step("has the element for the frame rate", () => {
+    assertStringIncludes(INDEX_HTML, `id="${FPS_ELEMENT_ID}"`);
   });
 
   await t.step("loads the client script", () => {

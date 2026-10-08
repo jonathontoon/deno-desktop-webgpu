@@ -3,22 +3,16 @@
  *
  * @module
  */
-import { CLEAR_COLOR } from "../../constants.ts";
-import { Graphics } from "../gpu/graphics.ts";
-import { Renderer } from "../gpu/renderer.ts";
-import { Cube } from "../scene/cube.ts";
-import { Scene } from "../scene/scene.ts";
 import { Singleton } from "../../singleton.ts";
-import type { CanvasDelegate } from "../../types.ts";
+import type { Backend, CanvasDelegate } from "../../types.ts";
 import { Canvas } from "./canvas.ts";
 
 /**
- * Creates the other objects and connects them. It is the delegate of the
- * canvas.
+ * Connects the canvas to the backend. It is the delegate of the canvas.
  *
  * @remarks
- * Only one instance exists. This class is the one place that makes each
- * singleton and gives it to the objects that need it.
+ * Only one instance exists. It makes the `Canvas` and gives each frame request
+ * to the backend.
  */
 export class Application implements CanvasDelegate {
   /** Keeps the one instance. */
@@ -36,37 +30,27 @@ export class Application implements CanvasDelegate {
   /** The canvas that shows the frames. */
   private readonly canvas: Canvas;
 
-  /** The GPU device and the WebGPU context of the canvas. */
-  private readonly graphics: Graphics;
-
-  /** The object that draws one frame. */
-  private readonly renderer: Renderer;
-
-  /** The drawables to draw in each frame. */
-  private readonly scene: Scene;
-
   /**
-   * Make the other objects and connect them. The loop does not run until
+   * Make the canvas and connect it to the backend. The loop does not run until
    * `start` is called.
    *
    * @param element - The canvas element of the page.
-   * @param device - The GPU device. Get it from `requestDevice`.
-   * @throws {Error} When the canvas gives no WebGPU context.
+   * @param backend - The object that draws each frame on the canvas.
    * @throws {Error} When an `Application` exists already.
    *
    * @example
    * ```typescript
-   * const application = new Application(element, await requestDevice());
+   * const application = new Application(element, await selectBackend(element));
    * application.start();
    * ```
    */
-  public constructor(element: HTMLCanvasElement, device: GPUDevice) {
+  public constructor(
+    element: HTMLCanvasElement,
+    /** The object that draws each frame on the canvas. */
+    private readonly backend: Backend,
+  ) {
     Application.holder.assertEmpty();
     this.canvas = new Canvas(element);
-    this.graphics = new Graphics(device, this.canvas.surface);
-    this.renderer = new Renderer(this.graphics, CLEAR_COLOR);
-    this.scene = new Scene();
-    this.scene.add(new Cube(this.graphics));
     Application.holder.claim(this);
   }
 
@@ -81,9 +65,6 @@ export class Application implements CanvasDelegate {
    * @param time - The time, in milliseconds.
    */
   public canvasDidRequestFrame(time: number): void {
-    this.renderer.render(this.scene, {
-      time,
-      aspectRatio: this.canvas.aspectRatio,
-    });
+    this.backend.render({ time, aspectRatio: this.canvas.aspectRatio });
   }
 }

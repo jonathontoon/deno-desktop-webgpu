@@ -39,6 +39,9 @@ export const CANVAS_ELEMENT_ID = "canvas";
 /** The `id` of the element that shows a start-up error to the user. */
 export const ERROR_ELEMENT_ID = "error";
 
+/** The `id` of the element that shows the name of the drawing method. */
+export const BACKEND_ELEMENT_ID = "backend";
+
 /** The path of the web page. */
 export const PAGE_PATH = "/";
 

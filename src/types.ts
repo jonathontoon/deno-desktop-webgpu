@@ -49,6 +49,27 @@ export interface PipelineOptions {
   readonly frontFace?: GPUFrontFace;
 }
 
+/** The drawing method that the program uses to draw on the canvas. */
+export type BackendKind = "webgpu" | "webgl2";
+
+/**
+ * An object that draws the scene on the canvas with one drawing method.
+ *
+ * @remarks
+ * `WebGPU` and `WebGL2` implement this protocol. `Application` does not know
+ * which one it has.
+ */
+export interface Backend {
+  /** The drawing method of this backend. */
+  readonly kind: BackendKind;
+  /**
+   * Draw one frame.
+   *
+   * @param frame - The data about the frame that is in progress.
+   */
+  render(frame: FrameInfo): void;
+}
+
 /** The canvas tells its delegate when to draw a frame. */
 export interface CanvasDelegate {
   /**

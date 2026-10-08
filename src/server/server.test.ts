@@ -5,6 +5,7 @@
  */
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
+  BACKEND_ELEMENT_ID,
   CANVAS_ELEMENT_ID,
   CLEAR_COLOR,
   CLIENT_SCRIPT_PATH,
@@ -25,6 +26,10 @@ Deno.test("index.html", async (t) => {
 
   await t.step("has the element for the error message", () => {
     assertStringIncludes(INDEX_HTML, `id="${ERROR_ELEMENT_ID}"`);
+  });
+
+  await t.step("has the element for the name of the drawing method", () => {
+    assertStringIncludes(INDEX_HTML, `id="${BACKEND_ELEMENT_ID}"`);
   });
 
   await t.step("loads the client script", () => {

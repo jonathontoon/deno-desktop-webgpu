@@ -13,7 +13,7 @@ import {
 import type { Graphics } from "../gpu/graphics.ts";
 import type { Drawable, FrameInfo } from "../../types.ts";
 import TRIANGLE_SHADER from "./triangle.wgsl" with { type: "text" };
-import { Pipeline } from "./pipeline.ts";
+import { Pipeline } from "../gpu/pipeline.ts";
 
 /**
  * Make a colored triangle that turns around its center. It is on the left side

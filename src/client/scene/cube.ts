@@ -12,7 +12,7 @@ import {
 import type { Graphics } from "../gpu/graphics.ts";
 import type { Drawable, FrameInfo } from "../../types.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
-import { Pipeline } from "./pipeline.ts";
+import { Pipeline } from "../gpu/pipeline.ts";
 
 /**
  * Make a 3D cube that turns and tips. Its 8 corners are the 8 colors of the RGB

@@ -3,47 +3,40 @@
  *
  * @module
  */
-import { assertEquals, assertThrows } from "@std/assert";
-import {
-  createFakeDevice,
-  createFakeSurface,
-  installFakeNavigatorGPU,
-} from "../../testing/fakes.ts";
+import { assertEquals, assertStrictEquals } from "@std/assert";
+import { fake } from "../../testing/fakes.ts";
+import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Renderer } from "./renderer.ts";
 import { WebGPU } from "./webgpu.ts";
 
+const FRAME: FrameInfo = { time: 1000, aspectRatio: 2 };
+
 Deno.test("WebGPU", async (t) => {
-  const fakeDevice = createFakeDevice();
-  const fakeSurface = createFakeSurface();
-  const restore = installFakeNavigatorGPU({ device: fakeDevice.device });
-  try {
-    const backend = new WebGPU(fakeDevice.device, fakeSurface.surface);
+  const drawn: { drawable: Drawable; frame: FrameInfo }[] = [];
+  const renderer = fake<Renderer>({
+    render: (drawable: Drawable, frame: FrameInfo) =>
+      void drawn.push({ drawable, frame }),
+  });
+  const drawable: Drawable = { draw: () => {} };
+  const backend = new WebGPU(renderer, drawable);
 
-    await t.step("the constructor draws nothing", () => {
-      assertEquals(fakeDevice.submissions.length, 0);
-    });
+  await t.step("the constructor draws nothing", () => {
+    assertEquals(drawn.length, 0);
+  });
 
-    await t.step("render draws the cube with 36 vertices", () => {
-      backend.render({ time: 1000, aspectRatio: 2 });
-      assertEquals(fakeDevice.submissions.length, 1);
-      assertEquals(
-        fakeDevice.events.filter((event) => event.startsWith("draw:")),
-        ["draw:36"],
-      );
-    });
+  await t.step(
+    "render gives the drawable and the frame to the renderer",
+    () => {
+      backend.render(FRAME);
+      assertEquals(drawn.length, 1);
+      assertStrictEquals(drawn[0].drawable, drawable);
+      assertStrictEquals(drawn[0].frame, FRAME);
+    },
+  );
 
-    await t.step("render gives the frame values to the cube", () => {
-      backend.render({ time: 2000, aspectRatio: 3 });
-      assertEquals(fakeDevice.writes.at(-1)?.data, [2, 3]);
-    });
-
-    await t.step("a second WebGPU fails, because Graphics exists", () => {
-      assertThrows(
-        () => new WebGPU(fakeDevice.device, createFakeSurface().surface),
-        Error,
-        "Graphics exists already.",
-      );
-    });
-  } finally {
-    restore();
-  }
+  await t.step("each render call draws one frame", () => {
+    backend.render({ time: 2000, aspectRatio: 3 });
+    assertEquals(drawn.length, 2);
+    assertEquals(drawn[1].frame, { time: 2000, aspectRatio: 3 });
+  });
 });

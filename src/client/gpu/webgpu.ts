@@ -3,47 +3,36 @@
  *
  * @module
  */
-import { CLEAR_COLOR } from "../../constants.ts";
-import type { Backend, FrameInfo } from "../../types.ts";
-import { createCube } from "../scene/cube.ts";
-import { Scene } from "../scene/scene.ts";
-import { Graphics } from "./graphics.ts";
-import { Renderer } from "./renderer.ts";
+import type { Backend, Drawable, FrameInfo } from "../../types.ts";
+import type { Renderer } from "./renderer.ts";
 
 /**
- * Draws the scene with WebGPU.
+ * Draws a drawable with WebGPU.
  *
  * @remarks
- * It makes the `Graphics` object, the `Renderer`, and the `Scene` that holds
- * the cube. A canvas has one WebGPU context, so only one `WebGPU` can exist.
- * The `Graphics` object enforces this.
+ * It gets the `Renderer` and the drawable from its constructor. It does not
+ * know what the drawable draws. `selectBackend` makes the `Graphics` object,
+ * the `Renderer`, and the scene. A canvas has one WebGPU context, so only one
+ * `Graphics` object can exist, and only one set of these objects.
  */
 export class WebGPU implements Backend {
-  /** The object that draws one frame. */
-  private readonly renderer: Renderer;
-
-  /** The drawables to draw in each frame. */
-  private readonly scene: Scene;
-
   /**
-   * Connect the GPU device to the canvas and make the scene.
+   * Make the backend.
    *
-   * @param device - The GPU device. Get it from `requestDevice`.
-   * @param surface - The canvas that WebGPU draws to.
-   * @throws {Error} When the canvas gives no WebGPU context.
-   * @throws {Error} When a `Graphics` object exists already.
+   * @param renderer - The object that draws one frame.
+   * @param drawable - The object to draw in each frame.
    *
    * @example
    * ```typescript
-   * const backend = new WebGPU(await requestDevice(), canvas);
+   * const backend = new WebGPU(renderer, scene);
    * ```
    */
-  public constructor(device: GPUDevice, surface: HTMLCanvasElement) {
-    const graphics = new Graphics(device, surface);
-    this.renderer = new Renderer(graphics, CLEAR_COLOR);
-    this.scene = new Scene();
-    this.scene.add(createCube(graphics));
-  }
+  public constructor(
+    /** The object that draws one frame. */
+    private readonly renderer: Renderer,
+    /** The object to draw in each frame. */
+    private readonly drawable: Drawable,
+  ) {}
 
   /**
    * Draw one frame.
@@ -51,6 +40,6 @@ export class WebGPU implements Backend {
    * @param frame - The data about the frame that is in progress.
    */
   public render(frame: FrameInfo): void {
-    this.renderer.render(this.scene, frame);
+    this.renderer.render(this.drawable, frame);
   }
 }

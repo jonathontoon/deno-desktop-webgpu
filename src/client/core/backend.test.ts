@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { assertInstanceOf, assertRejects } from "@std/assert";
+import { assertEquals, assertInstanceOf, assertRejects } from "@std/assert";
 import {
   createFakeDevice,
   createFakeSurface,
@@ -31,11 +31,35 @@ Deno.test("selectBackend", async (t) => {
     }
   });
 
-  await t.step("gives a WebGPU backend when WebGPU works", async () => {
+  await t.step("gives a WebGPU backend that draws the cube", async () => {
     const restore = installFakeNavigatorGPU({ device: fakeDevice.device });
     try {
       const backend = await selectBackend(createFakeSurface().surface);
       assertInstanceOf(backend, WebGPU);
+      assertEquals(fakeDevice.submissions.length, 0);
+
+      backend.render({ time: 1000, aspectRatio: 2 });
+      assertEquals(fakeDevice.submissions.length, 1);
+      assertEquals(
+        fakeDevice.events.filter((event) => event.startsWith("draw:")),
+        ["draw:36"],
+      );
+
+      backend.render({ time: 2000, aspectRatio: 3 });
+      assertEquals(fakeDevice.writes.at(-1)?.data, [2, 3]);
+    } finally {
+      restore();
+    }
+  });
+
+  await t.step("a second backend fails, because Graphics exists", async () => {
+    const restore = installFakeNavigatorGPU({ device: fakeDevice.device });
+    try {
+      await assertRejects(
+        () => selectBackend(createFakeSurface().surface),
+        Error,
+        "Graphics exists already.",
+      );
     } finally {
       restore();
     }

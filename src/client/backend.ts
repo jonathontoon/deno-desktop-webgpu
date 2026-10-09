@@ -3,8 +3,8 @@
  *
  * @module
  */
-import { CLEAR_COLOR } from "../constants.ts";
-import type { Backend } from "../types.ts";
+import { CLEAR_COLOR } from "./constants.ts";
+import type { Backend } from "./types.ts";
 import { Graphics, requestDevice } from "./gpu/graphics.ts";
 import { Renderer } from "./gpu/renderer.ts";
 import { WebGPU } from "./gpu/webgpu.ts";

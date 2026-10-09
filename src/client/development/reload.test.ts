@@ -6,7 +6,8 @@
 import { assertEquals } from "@std/assert";
 import { stub } from "@std/testing/mock";
 import { FakeTime } from "@std/testing/time";
-import { RELOAD_INTERVAL_MS, VERSION_PATH } from "../../constants.ts";
+import { RELOAD_INTERVAL_MS } from "../constants.ts";
+import { VERSION_PATH } from "../../constants.ts";
 import { fake } from "../../testing/fakes.ts";
 import { reloadOnChange } from "./reload.ts";
 

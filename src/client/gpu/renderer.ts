@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../types.ts";
 import type { Graphics } from "./graphics.ts";
 
 /**

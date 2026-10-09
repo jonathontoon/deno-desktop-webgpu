@@ -9,9 +9,9 @@ import {
   TRIANGLE_OFFSET_X,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   TRIANGLE_VERTEX_COUNT,
-} from "../../constants.ts";
+} from "../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
-import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../types.ts";
 import TRIANGLE_SHADER from "./triangle.wgsl" with { type: "text" };
 import { Pipeline } from "../gpu/pipeline.ts";
 

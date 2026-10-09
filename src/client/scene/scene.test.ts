@@ -5,7 +5,7 @@
  */
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import { createFakePass, fake } from "../../testing/fakes.ts";
-import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../types.ts";
 import { Scene } from "./scene.ts";
 
 const FRAME: FrameInfo = { time: 1000, aspectRatio: 2 };

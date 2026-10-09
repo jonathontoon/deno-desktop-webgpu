@@ -3,7 +3,8 @@
  *
  * @module
  */
-import { RELOAD_INTERVAL_MS, VERSION_PATH } from "../../constants.ts";
+import { RELOAD_INTERVAL_MS } from "../constants.ts";
+import { VERSION_PATH } from "../../constants.ts";
 
 /**
  * Ask the server for the version of the page files at each interval. Call

@@ -5,7 +5,7 @@
  */
 import { assertEquals } from "@std/assert";
 import { FakeTime } from "@std/testing/time";
-import { METER_INTERVAL_MS, METER_TICK_MS } from "../../constants.ts";
+import { METER_INTERVAL_MS, METER_TICK_MS } from "../constants.ts";
 import {
   createFakeSurface,
   fake,

@@ -4,7 +4,7 @@
  * @module
  */
 import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
-import type { FrameHandler, FrameInfo } from "../types.ts";
+import type { FrameHandler, FrameInfo } from "./types.ts";
 import {
   createFakeSurface,
   installFakeAnimationFrames,

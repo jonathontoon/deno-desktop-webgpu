@@ -11,8 +11,8 @@ import {
   INDEX_HTML_SOURCE,
   STYLES_SOURCE,
   WATCH_ARGUMENT,
-} from "../../constants.ts";
-import type { ProcessStatus, SpawnProcess } from "../../types.ts";
+} from "../constants.ts";
+import type { ProcessStatus, SpawnProcess } from "../types.ts";
 import { runDevelopment } from "./development.ts";
 
 /** What a fake child process does when it is started. */

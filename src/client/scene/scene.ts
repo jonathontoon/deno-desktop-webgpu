@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../types.ts";
 
 /**
  * A list of drawables. It draws them in the order that they were added.

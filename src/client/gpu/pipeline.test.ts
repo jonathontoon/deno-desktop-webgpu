@@ -4,9 +4,9 @@
  * @module
  */
 import { assertEquals, assertExists, assertStrictEquals } from "@std/assert";
-import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../../constants.ts";
+import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../constants.ts";
 import { createFakeDevice, createFakePass } from "../../testing/fakes.ts";
-import type { FrameInfo, PipelineOptions } from "../../types.ts";
+import type { FrameInfo, PipelineOptions } from "../types.ts";
 import { Pipeline } from "./pipeline.ts";
 
 const FLOAT_BYTES = 4;

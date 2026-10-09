@@ -8,9 +8,9 @@ import {
   CUBE_UNIFORM_FLOAT_COUNT,
   CUBE_VERTEX_COUNT,
   MS_PER_SECOND,
-} from "../../constants.ts";
+} from "../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
-import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../types.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
 import { Pipeline } from "../gpu/pipeline.ts";
 

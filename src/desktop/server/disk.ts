@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { DiskFiles } from "../../types.ts";
+import type { DiskFiles } from "../types.ts";
 
 /**
  * Reads the files of the page from the disk and tells when they change. The

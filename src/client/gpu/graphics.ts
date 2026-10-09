@@ -3,8 +3,8 @@
  *
  * @module
  */
-import { CANVAS_ALPHA_MODE, GPU_POWER_PREFERENCE } from "../../constants.ts";
-import { Singleton } from "../../singleton.ts";
+import { CANVAS_ALPHA_MODE, GPU_POWER_PREFERENCE } from "../constants.ts";
+import { Singleton } from "../singleton.ts";
 
 /**
  * Owns the GPU device and the WebGPU context of the window.

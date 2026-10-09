@@ -16,7 +16,7 @@ import {
   FRAGMENT_ENTRY_POINT,
   MS_PER_SECOND,
   VERTEX_ENTRY_POINT,
-} from "../../constants.ts";
+} from "../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };

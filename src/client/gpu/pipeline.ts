@@ -3,13 +3,13 @@
  *
  * @module
  */
-import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../../constants.ts";
+import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../constants.ts";
 import type {
   Drawable,
   FrameInfo,
   PipelineOptions,
   UniformWriter,
-} from "../../types.ts";
+} from "../types.ts";
 
 /**
  * A drawable that uses one render pipeline and one uniform buffer.

@@ -15,7 +15,7 @@ import {
   TRIANGLE_OFFSET_X,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   VERTEX_ENTRY_POINT,
-} from "../../constants.ts";
+} from "../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import TRIANGLE_SHADER from "./triangle.wgsl" with { type: "text" };

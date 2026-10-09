@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { SpawnProcess } from "../../types.ts";
+import type { SpawnProcess } from "../types.ts";
 import { runDevelopment } from "./development.ts";
 
 const spawn: SpawnProcess = (args) => {

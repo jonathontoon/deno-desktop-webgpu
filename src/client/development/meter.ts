@@ -7,7 +7,7 @@ import {
   METER_INTERVAL_MS,
   METER_TICK_MS,
   MS_PER_SECOND,
-} from "../../constants.ts";
+} from "../constants.ts";
 
 /**
  * Shows in the page how well the page runs: the number of animation frames and

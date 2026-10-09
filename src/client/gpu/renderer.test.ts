@@ -5,7 +5,7 @@
  */
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
-import type { Drawable, FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../types.ts";
 import type { Graphics } from "./graphics.ts";
 import { Renderer } from "./renderer.ts";
 

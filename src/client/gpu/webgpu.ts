@@ -3,7 +3,7 @@
  *
  * @module
  */
-import type { Backend, Drawable, FrameInfo } from "../../types.ts";
+import type { Backend, Drawable, FrameInfo } from "../types.ts";
 import type { Renderer } from "./renderer.ts";
 
 /**

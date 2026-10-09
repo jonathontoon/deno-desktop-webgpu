@@ -8,11 +8,10 @@
  */
 import {
   CANVAS_ELEMENT_ID,
-  DEV_ATTRIBUTE,
   ERROR_ELEMENT_ID,
   METER_ELEMENT_ID,
-  VERSION_ATTRIBUTE,
-} from "../constants.ts";
+} from "./constants.ts";
+import { DEV_ATTRIBUTE, VERSION_ATTRIBUTE } from "../constants.ts";
 import { showAlert } from "./alert.ts";
 import { selectBackend } from "./backend.ts";
 import { Canvas } from "./canvas.ts";

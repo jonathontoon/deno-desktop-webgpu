@@ -31,6 +31,15 @@ export interface Drawable {
   draw(pass: GPURenderPassEncoder, frame: FrameInfo): void;
 }
 
+/**
+ * A function that puts the uniform values of one frame into an array. A
+ * `Pipeline` calls it before each draw.
+ *
+ * @param frame - The data about the frame that is in progress.
+ * @param uniforms - The numbers that go to the shader. Write into this array.
+ */
+export type UniformWriter = (frame: FrameInfo, uniforms: Float32Array) => void;
+
 /** The values that a `Pipeline` needs to build its GPU objects. */
 export interface PipelineOptions {
   /** The GPU device that makes the GPU objects. */
@@ -43,6 +52,8 @@ export interface PipelineOptions {
   readonly vertexCount: number;
   /** The number of numbers in the uniform buffer. */
   readonly uniformFloatCount: number;
+  /** The function that fills the uniform values for each frame. */
+  readonly writeUniforms: UniformWriter;
   /** Which faces the GPU does not draw. The default is `"none"`. */
   readonly cullMode?: GPUCullMode;
   /** Which winding order is the front of a face. The default is `"ccw"`. */

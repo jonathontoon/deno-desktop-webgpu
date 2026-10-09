@@ -1,5 +1,5 @@
 /**
- * The `Cube` class.
+ * The `createCube` function.
  *
  * @module
  */
@@ -10,12 +10,12 @@ import {
   MS_PER_SECOND,
 } from "../../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
-import type { FrameInfo } from "../../types.ts";
+import type { Drawable, FrameInfo } from "../../types.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
 import { Pipeline } from "./pipeline.ts";
 
 /**
- * A 3D cube that turns and tips. Its 8 corners are the 8 colors of the RGB
+ * Make a 3D cube that turns and tips. Its 8 corners are the 8 colors of the RGB
  * cube. It is in the center of the window.
  *
  * @remarks
@@ -23,41 +23,35 @@ import { Pipeline } from "./pipeline.ts";
  * the aspect ratio of the window. The GPU does not draw the faces that point
  * away from the camera, so the cube needs no depth buffer.
  *
+ * @param graphics - The `Graphics` object. It gives the device and the pixel format.
+ * @returns The drawable cube.
+ *
  * @example
  * ```typescript
- * scene.add(new Cube(graphics));
+ * scene.add(createCube(graphics));
  * ```
  */
-export class Cube extends Pipeline {
-  /**
-   * Make the cube and its GPU objects.
-   *
-   * @param graphics - The `Graphics` object. It gives the device and the pixel format.
-   */
-  public constructor(graphics: Graphics) {
-    super({
-      device: graphics.device,
-      format: graphics.format,
-      shaderCode: CUBE_SHADER,
-      vertexCount: CUBE_VERTEX_COUNT,
-      uniformFloatCount: CUBE_UNIFORM_FLOAT_COUNT,
-      cullMode: "back",
-      frontFace: "cw",
-    });
-  }
+export function createCube(graphics: Graphics): Drawable {
+  return new Pipeline({
+    device: graphics.device,
+    format: graphics.format,
+    shaderCode: CUBE_SHADER,
+    vertexCount: CUBE_VERTEX_COUNT,
+    uniformFloatCount: CUBE_UNIFORM_FLOAT_COUNT,
+    writeUniforms: writeCubeUniforms,
+    cullMode: "back",
+    frontFace: "cw",
+  });
+}
 
-  /**
-   * Put the rotation angle and the aspect ratio into the uniform values.
-   *
-   * @param frame - The data about the frame. `time` sets the angle. The angle
-   * repeats after `CUBE_ANGLE_PERIOD`, so it stays small.
-   * @param uniforms - The numbers that go to the shader.
-   */
-  protected override writeUniforms(
-    frame: FrameInfo,
-    uniforms: Float32Array,
-  ): void {
-    uniforms[0] = (frame.time / MS_PER_SECOND) % CUBE_ANGLE_PERIOD;
-    uniforms[1] = frame.aspectRatio;
-  }
+/**
+ * Put the rotation angle and the aspect ratio into the uniform values.
+ *
+ * @param frame - The data about the frame. `time` sets the angle. The angle
+ * repeats after `CUBE_ANGLE_PERIOD`, so it stays small.
+ * @param uniforms - The numbers that go to the shader.
+ */
+function writeCubeUniforms(frame: FrameInfo, uniforms: Float32Array): void {
+  uniforms[0] = (frame.time / MS_PER_SECOND) % CUBE_ANGLE_PERIOD;
+  uniforms[1] = frame.aspectRatio;
 }

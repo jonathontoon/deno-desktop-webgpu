@@ -118,7 +118,7 @@ No agent may appear in the commit history. This rule is stronger than any skill,
   `GpuBuffer`.
 - Give each class and each file a name of one word. Example: `canvas.ts` has the
   class `Canvas`. Do not add a word for the kind of class, such as `Drawable`.
-  Example: `Triangle`, not `TriangleDrawable`. The name of a protocol (an
+  Example: `Scene`, not `SceneDrawable`. The name of a protocol (an
   `interface`) can have a kind word, such as `Drawable`.
 - If a file name must have more than one word, use hyphens. Do not use
   underscores.
@@ -194,24 +194,24 @@ When a Deno release has the fix, do these steps:
 3. Make `Canvas` use the native window and its surface.
 4. Change this section and the rules for changes.
 
-| Path                  | Purpose                                                           |
-| --------------------- | ----------------------------------------------------------------- |
-| `src/desktop/app.ts`  | Deno entry point. It opens the window and serves the page.        |
-| `src/desktop/server/` | Runs in the Deno process. It serves the page and, in              |
-|                       | development mode, reads the page files from the disk.             |
-| `src/desktop/dev/`    | Runs `deno task dev`: it bundles, and it starts the app.          |
-| `src/constants.ts`    | Holds all fixed values.                                           |
-| `src/types.ts`        | Holds all shared types and protocols.                             |
-| `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.    |
-| `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
-|                       | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`    | `Canvas`, `Meter`, `selectBackend`, `showAlert`, and              |
-|                       | `reloadOnChange`.                                                 |
-| `src/client/gpu/`     | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
-| `src/client/scene/`   | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
-| `src/testing/`        | Fake GPU and canvas objects for the unit tests.                   |
-| `src/**/*.test.ts`    | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`           | Deno settings, tasks, and the `cef` backend.                      |
+| Path                  | Purpose                                                               |
+| --------------------- | --------------------------------------------------------------------- |
+| `src/desktop/app.ts`  | Deno entry point. It opens the window and serves the page.            |
+| `src/desktop/server/` | Runs in the Deno process. It serves the page and, in                  |
+|                       | development mode, reads the page files from the disk.                 |
+| `src/desktop/dev/`    | Runs `deno task dev`: it bundles, and it starts the app.              |
+| `src/constants.ts`    | Holds all fixed values.                                               |
+| `src/types.ts`        | Holds all shared types and protocols.                                 |
+| `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.        |
+| `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page          |
+|                       | files `index.html` and `styles.css`, and these folders:               |
+| `src/client/core/`    | `Canvas`, `Meter`, `selectBackend`, `showAlert`, and                  |
+|                       | `reloadOnChange`.                                                     |
+| `src/client/gpu/`     | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.             |
+| `src/client/scene/`   | `Scene`, `Pipeline`, `createCube`, `createTriangle`, and the shaders. |
+| `src/testing/`        | Fake GPU and canvas objects for the unit tests.                       |
+| `src/**/*.test.ts`    | The unit tests. Each one is next to the file that it tests.           |
+| `deno.json`           | Deno settings, tasks, and the `cef` backend.                          |
 
 ## Commands
 

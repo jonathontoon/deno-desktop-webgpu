@@ -15,7 +15,7 @@ import type { Drawable, FrameInfo } from "../../types.ts";
  * @example
  * ```typescript
  * const scene = new Scene();
- * scene.add(new Cube(graphics));
+ * scene.add(createCube(graphics));
  * ```
  */
 export class Scene implements Drawable {
@@ -29,7 +29,7 @@ export class Scene implements Drawable {
    *
    * @example
    * ```typescript
-   * scene.add(new Triangle(graphics));
+   * scene.add(createTriangle(graphics));
    * ```
    */
   public add(drawable: Drawable): void {

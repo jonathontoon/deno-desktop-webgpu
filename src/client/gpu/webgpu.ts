@@ -5,7 +5,7 @@
  */
 import { CLEAR_COLOR } from "../../constants.ts";
 import type { Backend, FrameInfo } from "../../types.ts";
-import { Cube } from "../scene/cube.ts";
+import { createCube } from "../scene/cube.ts";
 import { Scene } from "../scene/scene.ts";
 import { Graphics } from "./graphics.ts";
 import { Renderer } from "./renderer.ts";
@@ -42,7 +42,7 @@ export class WebGPU implements Backend {
     const graphics = new Graphics(device, surface);
     this.renderer = new Renderer(graphics, CLEAR_COLOR);
     this.scene = new Scene();
-    this.scene.add(new Cube(graphics));
+    this.scene.add(createCube(graphics));
   }
 
   /**

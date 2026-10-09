@@ -1,5 +1,5 @@
 /**
- * Unit tests for `Cube` and its shader file.
+ * Unit tests for `createCube` and its shader file.
  *
  * @module
  */
@@ -20,18 +20,18 @@ import {
 import type { Graphics } from "../gpu/graphics.ts";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
-import { Cube } from "./cube.ts";
+import { createCube } from "./cube.ts";
 
 const FLOAT_BYTES = 4;
 
 /** Make a cube with a fake device. */
-function createCube() {
+function makeCube() {
   const gpu = createFakeDevice();
   const context = fake<Graphics>({
     device: gpu.device,
     format: "bgra8unorm",
   });
-  return { gpu, cube: new Cube(context) };
+  return { gpu, cube: createCube(context) };
 }
 
 Deno.test("the shader file has the entry points that the constants name", () => {
@@ -94,7 +94,7 @@ Deno.test("each triangle goes around the same way when seen from outside", () =>
 });
 
 Deno.test("the cube uses the shader file and the pixel format", () => {
-  const { gpu } = createCube();
+  const { gpu } = makeCube();
   assertEquals(gpu.shaderModuleDescriptors, [{ code: CUBE_SHADER }]);
   assertEquals(gpu.pipelineDescriptors[0].fragment?.targets, [
     { format: "bgra8unorm" },
@@ -102,7 +102,7 @@ Deno.test("the cube uses the shader file and the pixel format", () => {
 });
 
 Deno.test("the cube does not draw the faces that point away", () => {
-  const { gpu } = createCube();
+  const { gpu } = makeCube();
   assertEquals(gpu.pipelineDescriptors[0].primitive, {
     topology: "triangle-list",
     cullMode: "back",
@@ -111,7 +111,7 @@ Deno.test("the cube does not draw the faces that point away", () => {
 });
 
 Deno.test("the cube makes a buffer for its uniform values", () => {
-  const { gpu } = createCube();
+  const { gpu } = makeCube();
   assertEquals(
     gpu.bufferDescriptors[0].size,
     CUBE_UNIFORM_FLOAT_COUNT * FLOAT_BYTES,
@@ -119,14 +119,14 @@ Deno.test("the cube makes a buffer for its uniform values", () => {
 });
 
 Deno.test("the cube draws 36 vertices", () => {
-  const { gpu, cube } = createCube();
+  const { gpu, cube } = makeCube();
   gpu.events.length = 0;
   cube.draw(gpu.pass, { time: 0, aspectRatio: 1 });
   assertEquals(gpu.events.at(-1), "draw:36");
 });
 
 Deno.test("the uniform values are the angle and the aspect ratio", () => {
-  const { gpu, cube } = createCube();
+  const { gpu, cube } = makeCube();
   cube.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
   assertEquals(gpu.writes[0].data, [2, 1.5]);
 });
@@ -144,7 +144,7 @@ Deno.test("the turn and the tip both repeat after the angle period", () => {
 });
 
 Deno.test("the angle stays below the angle period after a long time", () => {
-  const { gpu, cube } = createCube();
+  const { gpu, cube } = makeCube();
   const seconds = 100 * 3600 + 1;
   cube.draw(gpu.pass, { time: seconds * MS_PER_SECOND, aspectRatio: 1 });
   const angle = gpu.writes[0].data[0];
@@ -153,7 +153,7 @@ Deno.test("the angle stays below the angle period after a long time", () => {
 });
 
 Deno.test("the angle is the same one period later", () => {
-  const { gpu, cube } = createCube();
+  const { gpu, cube } = makeCube();
   const period = CUBE_ANGLE_PERIOD * MS_PER_SECOND;
   cube.draw(gpu.pass, { time: 3000, aspectRatio: 1 });
   cube.draw(gpu.pass, { time: 3000 + period, aspectRatio: 1 });

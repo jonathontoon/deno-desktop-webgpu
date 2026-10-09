@@ -4,12 +4,12 @@
  * @module
  */
 import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
-import type { FrameHandler, FrameInfo } from "../../types.ts";
+import type { FrameHandler, FrameInfo } from "../types.ts";
 import {
   createFakeSurface,
   installFakeAnimationFrames,
   installFakeResizeObserver,
-} from "../../testing/fakes.ts";
+} from "../testing/fakes.ts";
 import { Canvas } from "./canvas.ts";
 
 /** The action that the handler runs at each frame. */

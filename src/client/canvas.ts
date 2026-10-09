@@ -3,9 +3,9 @@
  *
  * @module
  */
-import { CANVAS_OBSERVED_BOX } from "../../constants.ts";
-import { Singleton } from "../../singleton.ts";
-import type { FrameHandler } from "../../types.ts";
+import { CANVAS_OBSERVED_BOX } from "../constants.ts";
+import { Singleton } from "../singleton.ts";
+import type { FrameHandler } from "../types.ts";
 
 /**
  * Owns the canvas that WebGPU draws to. It keeps the size of the drawing

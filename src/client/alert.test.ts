@@ -5,7 +5,7 @@
  */
 import { assertEquals } from "@std/assert";
 import { stub } from "@std/testing/mock";
-import { fake } from "../../testing/fakes.ts";
+import { fake } from "../testing/fakes.ts";
 import { showAlert } from "./alert.ts";
 
 /** Make a fake element that starts hidden and empty. */

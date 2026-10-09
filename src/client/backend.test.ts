@@ -8,8 +8,8 @@ import {
   createFakeDevice,
   createFakeSurface,
   installFakeNavigatorGPU,
-} from "../../testing/fakes.ts";
-import { WebGPU } from "../gpu/webgpu.ts";
+} from "../testing/fakes.ts";
+import { WebGPU } from "./gpu/webgpu.ts";
 import { selectBackend } from "./backend.ts";
 
 Deno.test("selectBackend", async (t) => {

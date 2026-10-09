@@ -167,7 +167,7 @@ files only. Without the flag, the app asks for the permission at each start.
 The program draws with WebGPU (`WebGPU` in `src/client/gpu/`). WebGPU needs a
 GPU and a driver that support it. If the computer has none, `showAlert` shows an
 error. `WebGPU` implements the `Backend` protocol, and `selectBackend` in
-`src/client/core/backend.ts` makes the backend. `Canvas` does not know
+`src/client/backend.ts` makes the backend. `Canvas` does not know
 which backend it has.
 
 `Canvas` reads the size of the canvas in device pixels from a `ResizeObserver`
@@ -193,24 +193,26 @@ When a Deno release has the fix, do these steps:
 3. Make `Canvas` use the native window and its surface.
 4. Change this section and the rules for changes.
 
-| Path                  | Purpose                                                           |
-| --------------------- | ----------------------------------------------------------------- |
-| `src/desktop/app.ts`  | Deno entry point. It opens the window and serves the page.        |
-| `src/desktop/server/` | Runs in the Deno process. It serves the page and, in              |
-|                       | development mode, reads the page files from the disk.             |
-| `src/desktop/dev/`    | Runs `deno task dev`: it bundles, and it starts the app.          |
-| `src/constants.ts`    | Holds all fixed values.                                           |
-| `src/types.ts`        | Holds all shared types and protocols.                             |
-| `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.    |
-| `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
-|                       | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`    | `Canvas`, `Meter`, `selectBackend`, `showAlert`, and              |
-|                       | `reloadOnChange`.                                                 |
-| `src/client/gpu/`     | The WebGPU backend: `WebGPU`, `Graphics`, `Renderer`, `Pipeline`. |
-| `src/client/scene/`   | `Scene`, `createCube`, `createTriangle`, and the shaders.         |
-| `src/testing/`        | Fake GPU and canvas objects for the unit tests.                   |
-| `src/**/*.test.ts`    | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`           | Deno settings, tasks, and the `cef` backend.                      |
+| Path                      | Purpose                                                           |
+| ------------------------- | ----------------------------------------------------------------- |
+| `src/desktop/app.ts`      | Deno entry point. It opens the window and serves the page.        |
+| `src/desktop/server/`     | Runs in the Deno process. It serves the page and, in              |
+|                           | development mode, reads the page files from the disk.             |
+| `src/desktop/dev/`        | Runs `deno task dev`: it bundles, and it starts the app.          |
+| `src/constants.ts`        | Holds all fixed values.                                           |
+| `src/types.ts`            | Holds all shared types and protocols.                             |
+| `src/singleton.ts`        | The `Singleton` holder for classes that own a unique resource.    |
+| `src/client/`             | Runs in the page. It has the entry point `main.ts`, the page      |
+|                           | files `index.html` and `styles.css`, `canvas.ts` (`Canvas`),      |
+|                           | `alert.ts` (`showAlert`), `backend.ts` (`selectBackend`), and     |
+|                           | these folders:                                                    |
+| `src/client/development/` | `Meter` and `reloadOnChange`. `main.ts` uses them only in         |
+|                           | development mode.                                                 |
+| `src/client/gpu/`         | The WebGPU backend: `WebGPU`, `Graphics`, `Renderer`, `Pipeline`. |
+| `src/client/scene/`       | `Scene`, `createCube`, `createTriangle`, and the shaders.         |
+| `src/testing/`            | Fake GPU and canvas objects for the unit tests.                   |
+| `src/**/*.test.ts`        | The unit tests. Each one is next to the file that it tests.       |
+| `deno.json`               | Deno settings, tasks, and the `cef` backend.                      |
 
 ## Commands
 

@@ -13,11 +13,11 @@ import {
   METER_ELEMENT_ID,
   VERSION_ATTRIBUTE,
 } from "../constants.ts";
-import { showAlert } from "./core/alert.ts";
-import { selectBackend } from "./core/backend.ts";
-import { Canvas } from "./core/canvas.ts";
-import { Meter } from "./core/meter.ts";
-import { reloadOnChange } from "./core/reload.ts";
+import { showAlert } from "./alert.ts";
+import { selectBackend } from "./backend.ts";
+import { Canvas } from "./canvas.ts";
+import { Meter } from "./development/meter.ts";
+import { reloadOnChange } from "./development/reload.ts";
 
 const canvasElement = document.getElementById(CANVAS_ELEMENT_ID);
 const message = document.getElementById(ERROR_ELEMENT_ID);

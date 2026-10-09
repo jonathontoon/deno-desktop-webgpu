@@ -7,23 +7,27 @@ import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
   CANVAS_ELEMENT_ID,
   CLEAR_COLOR,
+  ERROR_ELEMENT_ID,
+  METER_ELEMENT_ID,
+} from "../../client/constants.ts";
+import {
+  DEV_ATTRIBUTE,
+  VERSION_ATTRIBUTE,
+  VERSION_PATH,
+} from "../../constants.ts";
+import {
   CLIENT_SCRIPT_PATH,
   CLIENT_SCRIPT_SOURCE,
-  DEV_ATTRIBUTE,
-  ERROR_ELEMENT_ID,
   HTTP_NOT_FOUND,
   INDEX_HTML_SOURCE,
-  METER_ELEMENT_ID,
   PAGE_PATH,
   PAGE_SOURCES,
   STYLES_PATH,
   STYLES_SOURCE,
-  VERSION_ATTRIBUTE,
-  VERSION_PATH,
   WINDOW_OPTIONS,
 } from "../constants.ts";
-import INDEX_HTML from "../client/index.html" with { type: "text" };
-import STYLES_CSS from "../client/styles.css" with { type: "text" };
+import INDEX_HTML from "../../client/index.html" with { type: "text" };
+import STYLES_CSS from "../../client/styles.css" with { type: "text" };
 import type { DiskFiles } from "../types.ts";
 import { createRequestHandler } from "./server.ts";
 

@@ -4,39 +4,15 @@
  * @module
  */
 import { assertEquals, assertExists, assertStrictEquals } from "@std/assert";
-import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../../constants.ts";
+import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../constants.ts";
 import { createFakeDevice, createFakePass } from "../../testing/fakes.ts";
-import type { FrameInfo, PipelineOptions } from "../../types.ts";
+import type { FrameInfo, PipelineOptions } from "../types.ts";
 import { Pipeline } from "./pipeline.ts";
 
 const FLOAT_BYTES = 4;
 const FRAME: FrameInfo = { time: 5, aspectRatio: 1.5 };
 
-/** A drawable that writes the frame values into the uniforms. */
-class TestPipeline extends Pipeline {
-  /** The names of the calls of `writeUniforms`, in the order that they ran. */
-  public readonly log: string[];
-
-  /**
-   * @param options - The options for the base class.
-   * @param log - The list that receives the name of each `writeUniforms` call.
-   */
-  public constructor(options: PipelineOptions, log: string[]) {
-    super(options);
-    this.log = log;
-  }
-
-  protected override writeUniforms(
-    frame: FrameInfo,
-    uniforms: Float32Array,
-  ): void {
-    this.log.push("writeUniforms");
-    uniforms[0] = frame.time;
-    uniforms[1] = frame.aspectRatio;
-  }
-}
-
-/** Make a drawable with a fake device. */
+/** Make a pipeline with a fake device. */
 function createTestPipeline() {
   const gpu = createFakeDevice();
   const options: PipelineOptions = {
@@ -45,8 +21,14 @@ function createTestPipeline() {
     shaderCode: "// shader",
     vertexCount: 6,
     uniformFloatCount: 2,
+    sampleCount: 4,
+    writeUniforms: (frame, uniforms) => {
+      gpu.events.push("writeUniforms");
+      uniforms[0] = frame.time;
+      uniforms[1] = frame.aspectRatio;
+    },
   };
-  const drawable = new TestPipeline(options, gpu.events);
+  const drawable = new Pipeline(options);
   return { gpu, drawable };
 }
 
@@ -69,6 +51,7 @@ Deno.test("the constructor makes a pipeline with the entry points", () => {
     cullMode: "none",
     frontFace: "ccw",
   });
+  assertEquals(descriptor.multisample, { count: 4 });
 });
 
 Deno.test("the constructor makes a uniform buffer of the right size", () => {
@@ -134,15 +117,17 @@ Deno.test("each draw call writes the values of its own frame", () => {
 
 Deno.test("the constructor passes the face culling to the pipeline", () => {
   const gpu = createFakeDevice();
-  new TestPipeline({
+  new Pipeline({
     device: gpu.device,
     format: "rgba8unorm",
     shaderCode: "// shader",
     vertexCount: 6,
     uniformFloatCount: 2,
+    sampleCount: 4,
+    writeUniforms: () => {},
     cullMode: "back",
     frontFace: "cw",
-  }, []);
+  });
   assertEquals(gpu.pipelineDescriptors[0].primitive, {
     topology: "triangle-list",
     cullMode: "back",

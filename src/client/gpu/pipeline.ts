@@ -1,45 +1,48 @@
 /**
- * The `Pipeline` base class.
+ * The `Pipeline` class.
  *
  * @module
  */
-import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../../constants.ts";
-import type { Drawable, FrameInfo, PipelineOptions } from "../../types.ts";
+import { FRAGMENT_ENTRY_POINT, VERTEX_ENTRY_POINT } from "../constants.ts";
+import type {
+  Drawable,
+  FrameInfo,
+  PipelineOptions,
+  UniformWriter,
+} from "../types.ts";
 
 /**
- * Base class for a drawable that uses one render pipeline and one uniform
- * buffer.
+ * A drawable that uses one render pipeline and one uniform buffer.
  *
  * @remarks
- * The base class owns the GPU objects. A subclass gives the shader code and
- * fills the uniform values. This class cannot make an object by itself,
- * because it is `abstract`. A subclass must write `writeUniforms`.
+ * The `Pipeline` owns the GPU objects. The shader code and the function that
+ * fills the uniform values come from the options. A program can have many
+ * pipelines. Each one has its own GPU objects.
  *
  * @example
  * ```typescript
- * class Pulse extends Pipeline {
- *   public constructor(graphics: Graphics) {
- *     super({
- *       device: graphics.device,
- *       format: graphics.format,
- *       shaderCode: PULSE_SHADER,
- *       vertexCount: 3,
- *       uniformFloatCount: 1,
- *     });
- *   }
- *
- *   protected override writeUniforms(frame: FrameInfo, uniforms: Float32Array): void {
+ * const pulse = new Pipeline({
+ *   device: graphics.device,
+ *   format: graphics.format,
+ *   shaderCode: PULSE_SHADER,
+ *   vertexCount: 3,
+ *   uniformFloatCount: 1,
+ *   writeUniforms: (frame, uniforms) => {
  *     uniforms[0] = frame.time;
- *   }
- * }
+ *   },
+ *   sampleCount: graphics.sampleCount,
+ * });
  * ```
  */
-export abstract class Pipeline implements Drawable {
+export class Pipeline implements Drawable {
   /** The GPU device that owns the GPU objects. */
   private readonly device: GPUDevice;
 
   /** The number of vertices to draw. */
   private readonly vertexCount: number;
+
+  /** The function that fills the uniform values for each frame. */
+  private readonly writeUniforms: UniformWriter;
 
   /** The render pipeline. It holds the compiled shader. */
   private readonly pipeline: GPURenderPipeline;
@@ -57,7 +60,8 @@ export abstract class Pipeline implements Drawable {
    * Make the pipeline, the uniform buffer, and the bind group.
    *
    * @param options - The device, the pixel format, the shader code, the sizes,
-   * and the face culling.
+   * the function that fills the uniform values, the number of samples for each
+   * pixel, and the face culling.
    */
   public constructor(options: PipelineOptions) {
     const {
@@ -66,11 +70,14 @@ export abstract class Pipeline implements Drawable {
       shaderCode,
       vertexCount,
       uniformFloatCount,
+      writeUniforms,
+      sampleCount,
       cullMode = "none",
       frontFace = "ccw",
     } = options;
     this.device = device;
     this.vertexCount = vertexCount;
+    this.writeUniforms = writeUniforms;
 
     const module = device.createShaderModule({ code: shaderCode });
     this.pipeline = device.createRenderPipeline({
@@ -82,6 +89,7 @@ export abstract class Pipeline implements Drawable {
         targets: [{ format }],
       },
       primitive: { topology: "triangle-list", cullMode, frontFace },
+      multisample: { count: sampleCount },
     });
 
     this.uniforms = new Float32Array(uniformFloatCount);
@@ -100,7 +108,7 @@ export abstract class Pipeline implements Drawable {
    *
    * @remarks
    * The steps are always in this order: `writeUniforms`, copy to the GPU,
-   * then set the pipeline and draw. A subclass does not change this order.
+   * then set the pipeline and draw.
    *
    * @param pass - The render pass that receives the draw calls.
    * @param frame - The data about the frame that is in progress.
@@ -113,15 +121,4 @@ export abstract class Pipeline implements Drawable {
     pass.setBindGroup(0, this.bindGroup);
     pass.draw(this.vertexCount);
   }
-
-  /**
-   * Put the uniform values for this frame into `uniforms`.
-   *
-   * @param frame - The data about the frame that is in progress.
-   * @param uniforms - The numbers that go to the shader. Write into this array.
-   */
-  protected abstract writeUniforms(
-    frame: FrameInfo,
-    uniforms: Float32Array,
-  ): void;
 }

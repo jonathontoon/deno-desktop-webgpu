@@ -5,10 +5,14 @@
  * @module
  */
 import {
+  DEV_ATTRIBUTE,
+  VERSION_ATTRIBUTE,
+  VERSION_PATH,
+} from "../../constants.ts";
+import {
   CLIENT_SCRIPT_PATH,
   CLIENT_SCRIPT_SOURCE,
   CSS_CONTENT_TYPE,
-  DEV_ATTRIBUTE,
   HTML_CONTENT_TYPE,
   HTTP_NOT_FOUND,
   INDEX_HTML_SOURCE,
@@ -18,12 +22,10 @@ import {
   STYLES_PATH,
   STYLES_SOURCE,
   TEXT_CONTENT_TYPE,
-  VERSION_ATTRIBUTE,
-  VERSION_PATH,
 } from "../constants.ts";
 import type { DiskFiles } from "../types.ts";
-import INDEX_HTML from "../client/index.html" with { type: "text" };
-import STYLES_CSS from "../client/styles.css" with { type: "text" };
+import INDEX_HTML from "../../client/index.html" with { type: "text" };
+import STYLES_CSS from "../../client/styles.css" with { type: "text" };
 
 /** One file that the server gives to the page. */
 interface PageFile {

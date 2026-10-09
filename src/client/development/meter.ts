@@ -7,8 +7,7 @@ import {
   METER_INTERVAL_MS,
   METER_TICK_MS,
   MS_PER_SECOND,
-} from "../../constants.ts";
-import { Singleton } from "../../singleton.ts";
+} from "../constants.ts";
 
 /**
  * Shows in the page how well the page runs: the number of animation frames and
@@ -16,25 +15,13 @@ import { Singleton } from "../../singleton.ts";
  * between two frames and between two ticks.
  *
  * @remarks
- * Only one instance exists. It has its own frame loop and its own timer, and it
- * does not depend on the `Canvas`. So it still counts when the drawing is slow
+ * It has its own frame loop and its own timer, and it does not depend on the
+ * `Canvas`. So it still counts when the drawing is slow
  * or stopped. A long wait between frames, but not between ticks, means that the
  * browser did not give frames. A long wait between ticks means that the whole
  * page was stopped.
  */
 export class Meter {
-  /** Keeps the one instance. */
-  private static readonly holder = new Singleton<Meter>("Meter");
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When no `Meter` exists yet.
-   */
-  public static get shared(): Meter {
-    return Meter.holder.get();
-  }
-
   /** The number of animation frames in the last interval. */
   private frames = 0;
 
@@ -64,7 +51,6 @@ export class Meter {
    *
    * @param target - The element that shows the numbers.
    * @param surface - The canvas to watch for size changes.
-   * @throws {Error} When a `Meter` exists already.
    *
    * @example
    * ```typescript
@@ -76,10 +62,7 @@ export class Meter {
     private readonly target: HTMLElement,
     /** The canvas to watch for size changes. */
     private readonly surface: HTMLCanvasElement,
-  ) {
-    Meter.holder.assertEmpty();
-    Meter.holder.claim(this);
-  }
+  ) {}
 
   /** Start to count and to show the numbers. */
   public start(): void {

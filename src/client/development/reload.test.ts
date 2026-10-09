@@ -1,35 +1,18 @@
 /**
- * Unit tests for `Reloader`.
+ * Unit tests for `reloadOnChange`.
  *
  * @module
  */
-import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { stub } from "@std/testing/mock";
 import { FakeTime } from "@std/testing/time";
-import { RELOAD_INTERVAL_MS, VERSION_PATH } from "../../constants.ts";
+import { RELOAD_INTERVAL_MS } from "../constants.ts";
+import { VERSION_PATH } from "../../constants.ts";
 import { fake } from "../../testing/fakes.ts";
-import { Reloader } from "./reloader.ts";
+import { reloadOnChange } from "./reload.ts";
 
-Deno.test("Reloader", async (t) => {
-  await t.step("shared fails before a Reloader exists", () => {
-    assertThrows(() => Reloader.shared, Error, "Reloader is not initialized.");
-  });
-
+Deno.test("reloadOnChange", async (t) => {
   let reloads = 0;
-  const reloader = new Reloader("1", () => void (reloads += 1));
-
-  await t.step("shared gives the instance", () => {
-    assertStrictEquals(Reloader.shared, reloader);
-  });
-
-  await t.step("a second Reloader fails", () => {
-    assertThrows(
-      () => new Reloader("1", () => {}),
-      Error,
-      "Reloader exists already.",
-    );
-  });
-
   let version = "1";
   const asked: string[] = [];
   let failing = false;
@@ -42,7 +25,7 @@ Deno.test("Reloader", async (t) => {
       );
   });
   using time = new FakeTime();
-  reloader.start();
+  reloadOnChange("1", () => void (reloads += 1));
 
   /** Let one interval pass and wait for the check to end. */
   const wait = async (): Promise<void> => {
@@ -81,4 +64,20 @@ Deno.test("Reloader", async (t) => {
     await wait();
     assertEquals(reloads, 1);
   });
+});
+
+Deno.test("reloadOnChange loads the page again at the first check if a file changed before it", async () => {
+  let reloads = 0;
+  // The server gave the page the version "1". A file changed in the first
+  // interval, so the first answer of the server is "2".
+  using _fetch = stub(
+    globalThis,
+    "fetch",
+    () => Promise.resolve(fake<Response>({ text: () => Promise.resolve("2") })),
+  );
+  using time = new FakeTime();
+  reloadOnChange("1", () => void (reloads += 1));
+  await time.tickAsync(RELOAD_INTERVAL_MS);
+  await time.runMicrotasks();
+  assertEquals(reloads, 1);
 });

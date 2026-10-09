@@ -14,6 +14,7 @@ import {
   createFakeSurface,
   installFakeNavigatorGPU,
 } from "../../testing/fakes.ts";
+import { SAMPLE_COUNT } from "../constants.ts";
 import { Graphics, requestDevice } from "./graphics.ts";
 
 Deno.test("requestDevice", async (t) => {
@@ -22,6 +23,20 @@ Deno.test("requestDevice", async (t) => {
     const restore = installFakeNavigatorGPU({ device });
     try {
       assertStrictEquals(await requestDevice(), device);
+    } finally {
+      restore();
+    }
+  });
+
+  await t.step("asks for the high-performance GPU", async () => {
+    const requests: (GPURequestAdapterOptions | undefined)[] = [];
+    const restore = installFakeNavigatorGPU({
+      device: createFakeDevice().device,
+      onRequestAdapter: (options) => void requests.push(options),
+    });
+    try {
+      await requestDevice();
+      assertEquals(requests, [{ powerPreference: "high-performance" }]);
     } finally {
       restore();
     }
@@ -66,14 +81,6 @@ Deno.test("requestDevice", async (t) => {
 });
 
 Deno.test("Graphics", async (t) => {
-  await t.step("shared fails before a Graphics exists", () => {
-    assertThrows(
-      () => Graphics.shared,
-      Error,
-      "Graphics is not initialized.",
-    );
-  });
-
   const fakeDevice = createFakeDevice();
   const restore = installFakeNavigatorGPU({
     device: fakeDevice.device,
@@ -107,9 +114,42 @@ Deno.test("Graphics", async (t) => {
       }]);
     });
 
-    await t.step("shared gives the instance", () => {
-      assertStrictEquals(Graphics.shared, graphics);
+    await t.step("sampleCount is the number of samples of the program", () => {
+      assertEquals(graphics.sampleCount, SAMPLE_COUNT);
     });
+
+    await t.step("multisampleView makes a texture with the samples", () => {
+      const view = graphics.multisampleView();
+      assertStrictEquals(view, fakeDevice.textureView);
+      assertEquals(fakeDevice.textureDescriptors, [{
+        size: [300, 150],
+        format: "rgba8unorm",
+        sampleCount: SAMPLE_COUNT,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      }]);
+    });
+
+    await t.step(
+      "multisampleView keeps the texture while the size is the same",
+      () => {
+        graphics.multisampleView();
+        graphics.multisampleView();
+        assertEquals(fakeDevice.textureDescriptors.length, 1);
+      },
+    );
+
+    await t.step(
+      "multisampleView makes a new texture when the size changes",
+      () => {
+        fakeSurface.surface.width = 800;
+        fakeSurface.surface.height = 600;
+        fakeDevice.events.length = 0;
+        graphics.multisampleView();
+        assertEquals(fakeDevice.textureDescriptors.length, 2);
+        assertEquals(fakeDevice.textureDescriptors[1].size, [800, 600]);
+        assertEquals(fakeDevice.events, ["texture.destroy", "createTexture"]);
+      },
+    );
 
     await t.step("a second Graphics fails and leaves the canvas alone", () => {
       const secondSurface = createFakeSurface();

@@ -3,8 +3,12 @@
  *
  * @module
  */
-import { CANVAS_ALPHA_MODE } from "../../constants.ts";
-import { Singleton } from "../../singleton.ts";
+import {
+  CANVAS_ALPHA_MODE,
+  GPU_POWER_PREFERENCE,
+  SAMPLE_COUNT,
+} from "../constants.ts";
+import { Singleton } from "../singleton.ts";
 
 /**
  * Owns the GPU device and the WebGPU context of the window.
@@ -15,22 +19,22 @@ import { Singleton } from "../../singleton.ts";
  */
 export class Graphics {
   /** Keeps the one instance. */
-  private static readonly holder = new Singleton<Graphics>("Graphics");
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When no `Graphics` exists yet.
-   */
-  public static get shared(): Graphics {
-    return Graphics.holder.get();
-  }
+  private static readonly holder = new Singleton("Graphics");
 
   /** The WebGPU context of the window. */
   private readonly context: GPUCanvasContext;
 
   /** The pixel format of the window. */
   public readonly format: GPUTextureFormat;
+
+  /** The number of samples for each pixel. Each pipeline uses this number. */
+  public readonly sampleCount: number = SAMPLE_COUNT;
+
+  /**
+   * The texture that has the samples of the frame. It is `undefined` until the
+   * first frame.
+   */
+  private multisample: MultisampleTarget | undefined;
 
   /**
    * Connect the GPU device to the canvas.
@@ -66,7 +70,7 @@ export class Graphics {
       alphaMode: CANVAS_ALPHA_MODE,
     });
     this.context = context;
-    Graphics.holder.claim(this);
+    Graphics.holder.claim();
   }
 
   /**
@@ -77,6 +81,44 @@ export class Graphics {
   public currentView(): GPUTextureView {
     return this.context.getCurrentTexture().createView();
   }
+
+  /**
+   * Give the texture that has the samples of the frame. The render pass draws
+   * to it, and the GPU then gives the mixed color of each pixel to the texture
+   * of the window. The texture has the size of the window. A change of the size
+   * of the window makes a new texture.
+   *
+   * @returns A view of the texture with the samples.
+   */
+  public multisampleView(): GPUTextureView {
+    const { width, height } = this.context.getCurrentTexture();
+    const current = this.multisample;
+    if (current && current.width === width && current.height === height) {
+      return current.view;
+    }
+    current?.texture.destroy();
+    const texture = this.device.createTexture({
+      size: [width, height],
+      format: this.format,
+      sampleCount: this.sampleCount,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
+    const view = texture.createView();
+    this.multisample = { texture, view, width, height };
+    return view;
+  }
+}
+
+/** The texture with the samples, its view, and the size that it was made for. */
+interface MultisampleTarget {
+  /** The texture. */
+  readonly texture: GPUTexture;
+  /** A view of the texture. */
+  readonly view: GPUTextureView;
+  /** The width of the texture, in pixels. */
+  readonly width: number;
+  /** The height of the texture, in pixels. */
+  readonly height: number;
 }
 
 /**
@@ -95,7 +137,9 @@ export async function requestDevice(): Promise<GPUDevice> {
   if (!navigator.gpu) {
     throw new Error("WebGPU is not available.");
   }
-  const adapter = await navigator.gpu.requestAdapter();
+  const adapter = await navigator.gpu.requestAdapter({
+    powerPreference: GPU_POWER_PREFERENCE,
+  });
   if (!adapter) {
     throw new Error("No WebGPU adapter is available.");
   }

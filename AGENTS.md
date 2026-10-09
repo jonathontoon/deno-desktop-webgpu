@@ -73,16 +73,20 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - Use "Object Calisthenics" only when the user asks for a strict review.
 - The skill examples use Node.js and NestJS. This project uses Deno. Use Deno
   APIs and the rules in this file.
-- A class that has exactly one instance MUST be a singleton. Give it a public
-  constructor and a `static get shared()` accessor. Do not add a static factory
-  such as `initialize`. Make each singleton with `new`, one time, in the
-  constructor of `Application`. Pass it to other objects through their
-  constructor. Do not call `shared` in the middle of a method.
-- Keep the instance in a `private static readonly holder = new Singleton<X>("X")`.
+- A class that owns a resource that can exist only once MUST be a singleton.
+  A second instance of such a class is a bug. Example: `Canvas` owns the one
+  canvas and the one frame loop. Example: `Graphics` owns the one WebGPU context
+  of the canvas.
+- Do not make a class a singleton if it owns no such resource. Example:
+  `Scene` and `Renderer`. A program can have more than one of them.
+- Give each singleton a public constructor. Do not add a static factory such as
+  `initialize`. Do not add a global accessor such as `shared`. Make each
+  singleton with `new`, one time. Pass it to other objects through their
+  constructor.
+- Guard the class with a `private static readonly holder = new Singleton("X")`.
   The first line of the constructor calls `holder.assertEmpty()`. A second `new`
-  then fails before it does any work. The last line calls `holder.claim(this)`.
-  Then the holder keeps only an object that the constructor made without a
-  failure.
+  then fails before it does any work. The last line calls `holder.claim()`. Then
+  the holder is full only after a constructor made an object without a failure.
 - A constructor cannot wait for a result. Do the slow work first, and give the
   result to the constructor. Example: `new Graphics(await requestDevice(), surface)`.
 
@@ -113,8 +117,8 @@ No agent may appear in the commit history. This rule is stronger than any skill,
   `GpuBuffer`.
 - Give each class and each file a name of one word. Example: `canvas.ts` has the
   class `Canvas`. Do not add a word for the kind of class, such as `Drawable`.
-  Example: `Triangle`, not `TriangleDrawable`. The name of a protocol (an
-  `interface`) can have a kind word, such as `Drawable` or `CanvasDelegate`.
+  Example: `Scene`, not `SceneDrawable`. The name of a protocol (an
+  `interface`) can have a kind word, such as `Drawable`.
 - If a file name must have more than one word, use hyphens. Do not use
   underscores.
 - Use TypeScript patterns, not JavaScript patterns. Use the keywords `private`,
@@ -122,8 +126,11 @@ No agent may appear in the commit history. This rule is stronger than any skill,
   fields. Do not use `any`. Write the return type of each method.
 - Use `interface` for object shapes and protocols. Use `type` for unions and
   aliases.
-- Put each fixed value in `src/constants.ts`. Put each shared type and protocol
-  in `src/types.ts`. Do not write a magic value inside a class.
+- Put each fixed value in the `constants.ts` of its area: `src/client/constants.ts`
+  for the page, and `src/desktop/constants.ts` for the Deno side. Put a value
+  that both sides use in `src/constants.ts`. Put each type and protocol that
+  more than one file uses in the `types.ts` of its area in the same way. Do not
+  write a magic value inside a class.
 - Write comments about the code as it is now. Do not refer to old code or to a
   past way of doing something. Do not compare the code with an earlier version.
   Example of a comment that is not allowed: "The old code did the same." Put the
@@ -151,7 +158,7 @@ Hot module reloading of Deno only changes the code of the server. It does not
 change the page. So in development mode the server reads `index.html`,
 `styles.css`, and `dist/client.js` from the disk for each request, and it
 answers `/version` with a text that changes when one of them changes. The
-`Reloader` in the page asks for this text twice each second and loads the page
+`reloadOnChange` in the page asks for this text twice each second and loads the page
 again when it is not the version that the server put in the page (the attribute
 `data-version` of the `<body>`). The server takes this version before it reads
 the files, so a change in the first moments after the page loads is not lost. This is a reload of the page. It does not keep the state
@@ -160,17 +167,16 @@ The app is a compiled program, and it has no permission unless the start command
 gives it. So `deno task dev` starts the app with `--allow-read` for these three
 files only. Without the flag, the app asks for the permission at each start.
 
-The program draws with WebGPU (`WebGPU` in `src/client/gpu/`). WebGPU needs a
-GPU and a driver that support it. If the computer has none, `Alert` shows an
-error. `WebGPU` implements the `Backend` protocol, and `selectBackend` in
-`src/client/core/backend.ts` makes the backend. `Application` does not know
-which backend it has.
+The program draws with WebGPU. `Graphics`, `Renderer`, and `Pipeline` in
+`src/client/gpu/` use it. `main.ts` makes them and the scene. WebGPU needs a GPU
+and a driver that support it. If the computer has none, `showAlert` shows an
+error.
 
 `Canvas` reads the size of the canvas in device pixels from a `ResizeObserver`
 with the box `device-pixel-content-box`. Chromium supports this box. A web view
 that does not support it, such as WebKit, is not supported.
 
-The Deno side (`src/app.ts`) opens the window and serves the page. The browser
+The Deno side (`src/desktop/app.ts`) opens the window and serves the page. The browser
 side (`src/client/main.ts`) runs in the page and draws.
 
 ### TODO: go back to the `raw` backend
@@ -185,28 +191,33 @@ When a Deno release has the fix, do these steps:
 
 1. Set `"backend": "raw"` in `deno.json`.
 2. Use `Deno.BrowserWindow` and `getNativeWindow()` for the surface. Remove
-   `src/server/`, the page files in `src/client/`, and the `bundle` task.
+   `src/desktop/server/`, the page files in `src/client/`, and the `bundle` task.
 3. Make `Canvas` use the native window and its surface.
 4. Change this section and the rules for changes.
 
-| Path                | Purpose                                                           |
-| ------------------- | ----------------------------------------------------------------- |
-| `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
-| `src/server/`       | Runs in the Deno process. It serves the page and, in              |
-|                     | development mode, reads the page files from the disk.             |
-| `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
-| `src/constants.ts`  | Holds all fixed values.                                           |
-| `src/types.ts`      | Holds all shared types and protocols.                             |
-| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
-| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
-|                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
-|                     | `selectBackend`.                                                  |
-| `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
-| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
-| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
-| `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`         | Deno settings, tasks, and the `cef` backend.                      |
+| Path                       | Purpose                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| `src/desktop/app.ts`       | Deno entry point. It opens the window and serves the page.     |
+| `src/desktop/server/`      | Runs in the Deno process. It serves the page and, in           |
+|                            | development mode, reads the page files from the disk.          |
+| `src/desktop/dev/`         | Runs `deno task dev`: it bundles, and it starts the app.       |
+| `src/desktop/constants.ts` | The fixed values of the Deno side.                             |
+| `src/desktop/types.ts`     | The types and protocols of the Deno side.                      |
+| `src/constants.ts`         | The fixed values that both sides use.                          |
+| `src/client/`              | Runs in the page. It has the entry point `main.ts`, the page   |
+|                            | files `index.html` and `styles.css`, `canvas.ts` (`Canvas`),   |
+|                            | `alert.ts` (`showAlert`), and                                  |
+|                            | the files and folders below:                                   |
+| `src/client/development/`  | `Meter` and `reloadOnChange`. `main.ts` uses them only in      |
+|                            | development mode.                                              |
+| `src/client/constants.ts`  | The fixed values of the page.                                  |
+| `src/client/types.ts`      | The types and protocols of the page.                           |
+| `src/client/singleton.ts`  | The `Singleton` holder for classes that own a unique resource. |
+| `src/client/gpu/`          | The WebGPU code: `Graphics`, `Renderer`, and `Pipeline`.       |
+| `src/client/scene/`        | `Scene`, `createCube`, and the cube shader.                    |
+| `src/testing/`             | Fake GPU and canvas objects for the unit tests.                |
+| `src/**/*.test.ts`         | The unit tests. Each one is next to the file that it tests.    |
+| `deno.json`                | Deno settings, tasks, and the `cef` backend.                   |
 
 ## Commands
 
@@ -217,7 +228,7 @@ Run all commands with `deno task <name>`.
 | `bundle`        | Bundle `src/client/main.ts` into `dist/client.js` for the page.                                                               |
 | `dev`           | Bundle, then start the app with hot reloading. It also bundles after each change, and it stops the bundler when the app ends. |
 | `build`         | Bundle, then build the desktop app.                                                                                           |
-| `check`         | Bundle, then check the types of `src/app.ts` and of the tests.                                                                |
+| `check`         | Bundle, then check the types of `src/desktop/app.ts` and of the tests.                                                        |
 | `lint`          | Run `deno lint`.                                                                                                              |
 | `lint:fix`      | Run `deno lint --fix`.                                                                                                        |
 | `format`        | Format all files with `deno fmt`.                                                                                             |
@@ -269,11 +280,9 @@ failed check stops the commit. GitHub runs the same checks on each push
 5. Keep `"unstable": ["webgpu"]` in `deno.json`. WebGPU needs it.
 6. The frame loop in `Canvas` uses `requestAnimationFrame`. The unit tests use
    the fake functions from `installFakeAnimationFrames` in `src/testing/fakes.ts`.
-7. Keep all code in `src/`. The entry point is `src/app.ts`. Do not add a root `main.ts`.
+7. Keep all code in `src/`. The entry point is `src/desktop/app.ts`. Do not add a root `main.ts`.
    The browser code is bundled to `dist/client.js` by `deno task bundle`. Do
    not commit `dist/`.
 8. Write shader code in `.wgsl` files in `src/`. Import them as text:
    `import CODE from "./file.wgsl" with { type: "text" };`
    Do not put shader code in `.ts` files.
-9. A new drawing method is a new class that implements `Backend`. Add it to
-   `selectBackend`. Do not let `Application` know which backend it has.

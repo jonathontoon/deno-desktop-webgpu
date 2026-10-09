@@ -38,24 +38,29 @@ You need a computer with a GPU that supports WebGPU.
 
 ## Files
 
-| File                | Purpose                                                           |
-| ------------------- | ----------------------------------------------------------------- |
-| `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
-| `src/server/`       | Runs in the Deno process. It serves the page and, in              |
-|                     | development mode, reads the page files from the disk.             |
-| `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
-| `src/constants.ts`  | Holds all fixed values.                                           |
-| `src/types.ts`      | Holds all shared types and protocols.                             |
-| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
-| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
-|                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
-|                     | `selectBackend`.                                                  |
-| `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
-| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
-| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
-| `src/**/*.test.ts`  | The unit tests.                                                   |
-| `deno.json`         | Settings. It selects the `cef` backend.                           |
+| File                       | Purpose                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| `src/desktop/app.ts`       | Deno entry point. It opens the window and serves the page.     |
+| `src/desktop/server/`      | Runs in the Deno process. It serves the page and, in           |
+|                            | development mode, reads the page files from the disk.          |
+| `src/desktop/dev/`         | Runs `deno task dev`: it bundles, and it starts the app.       |
+| `src/desktop/constants.ts` | The fixed values of the Deno side.                             |
+| `src/desktop/types.ts`     | The types and protocols of the Deno side.                      |
+| `src/constants.ts`         | The fixed values that both sides use.                          |
+| `src/client/`              | Runs in the page. It has the entry point `main.ts`, the page   |
+|                            | files `index.html` and `styles.css`, `canvas.ts` (`Canvas`),   |
+|                            | `alert.ts` (`showAlert`), and                                  |
+|                            | the files and folders below:                                   |
+| `src/client/development/`  | `Meter` and `reloadOnChange`. `main.ts` uses them only in      |
+|                            | development mode.                                              |
+| `src/client/constants.ts`  | The fixed values of the page.                                  |
+| `src/client/types.ts`      | The types and protocols of the page.                           |
+| `src/client/singleton.ts`  | The `Singleton` holder for classes that own a unique resource. |
+| `src/client/gpu/`          | The WebGPU code: `Graphics`, `Renderer`, and `Pipeline`.       |
+| `src/client/scene/`        | `Scene`, `createCube`, and the cube shader.                    |
+| `src/testing/`             | Fake GPU and canvas objects for the unit tests.                |
+| `src/**/*.test.ts`         | The unit tests.                                                |
+| `deno.json`                | Settings. It selects the `cef` backend.                        |
 
 ## Agents
 

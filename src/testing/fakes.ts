@@ -39,8 +39,20 @@ export interface FakeDevice {
   readonly bufferDescriptors: GPUBufferDescriptor[];
   /** The arguments of each `createBindGroup` call. */
   readonly bindGroupDescriptors: GPUBindGroupDescriptor[];
-  /** The arguments of each `beginRenderPass` call. */
+  /** The arguments of each `createTexture` call. */
+  readonly textureDescriptors: GPUTextureDescriptor[];
+  /** The view that each texture from `createTexture` gives. */
+  readonly textureView: GPUTextureView;
+  /**
+   * The values of the arguments of each `beginRenderPass` call, as they were
+   * at the time of the call.
+   */
   readonly passDescriptors: GPURenderPassDescriptor[];
+  /**
+   * The argument objects of each `beginRenderPass` call. Code that reuses an
+   * object gives the same object more than one time.
+   */
+  readonly passDescriptorObjects: GPURenderPassDescriptor[];
   /** Each `writeBuffer` call. */
   readonly writes: BufferWrite[];
   /** The command buffers of each `submit` call. */
@@ -83,7 +95,10 @@ export function createFakeDevice(): FakeDevice {
   const pipelineDescriptors: GPURenderPipelineDescriptor[] = [];
   const bufferDescriptors: GPUBufferDescriptor[] = [];
   const bindGroupDescriptors: GPUBindGroupDescriptor[] = [];
+  const textureDescriptors: GPUTextureDescriptor[] = [];
+  const textureView = fake<GPUTextureView>({});
   const passDescriptors: GPURenderPassDescriptor[] = [];
+  const passDescriptorObjects: GPURenderPassDescriptor[] = [];
   const writes: BufferWrite[] = [];
   const submissions: GPUCommandBuffer[][] = [];
 
@@ -117,11 +132,25 @@ export function createFakeDevice(): FakeDevice {
       bindGroupDescriptors.push(descriptor);
       return bindGroup;
     },
+    createTexture: (descriptor: GPUTextureDescriptor) => {
+      textureDescriptors.push(descriptor);
+      events.push("createTexture");
+      return fake<GPUTexture>({
+        createView: () => textureView,
+        destroy: () => void events.push("texture.destroy"),
+      });
+    },
     createCommandEncoder: () => {
       events.push("createCommandEncoder");
       return fake<GPUCommandEncoder>({
         beginRenderPass: (descriptor: GPURenderPassDescriptor) => {
-          passDescriptors.push(descriptor);
+          passDescriptorObjects.push(descriptor);
+          passDescriptors.push({
+            ...descriptor,
+            colorAttachments: [...descriptor.colorAttachments].flatMap((
+              attachment,
+            ) => attachment ? [{ ...attachment }] : []),
+          });
           events.push("beginRenderPass");
           return pass;
         },
@@ -154,7 +183,10 @@ export function createFakeDevice(): FakeDevice {
     pipelineDescriptors,
     bufferDescriptors,
     bindGroupDescriptors,
+    textureDescriptors,
+    textureView,
     passDescriptors,
+    passDescriptorObjects,
     writes,
     submissions,
     pass,
@@ -197,7 +229,11 @@ export function createFakeSurface(hasContext = true): FakeSurface {
       configure: (configuration: GPUCanvasConfiguration) => {
         configurations.push(configuration);
       },
-      getCurrentTexture: () => ({ createView: () => view }),
+      getCurrentTexture: () => ({
+        createView: () => view,
+        width: surface.width,
+        height: surface.height,
+      }),
     })
     : null;
 
@@ -222,8 +258,11 @@ export interface FakeNavigatorGPUOptions {
   readonly hasAdapter?: boolean;
   /** The preferred pixel format. */
   readonly format?: GPUTextureFormat;
-  /** A function that runs each time the code asks for an adapter. */
-  readonly onRequestAdapter?: () => void;
+  /**
+   * A function that runs each time the code asks for an adapter. It gets the
+   * options of the request.
+   */
+  readonly onRequestAdapter?: (options?: GPURequestAdapterOptions) => void;
 }
 
 /**
@@ -245,8 +284,8 @@ export function installFakeNavigatorGPU(
   Object.defineProperty(navigator, "gpu", {
     configurable: true,
     value: {
-      requestAdapter: () => {
-        onRequestAdapter();
+      requestAdapter: (adapterOptions?: GPURequestAdapterOptions) => {
+        onRequestAdapter(adapterOptions);
         return Promise.resolve(
           hasAdapter ? { requestDevice: () => Promise.resolve(device) } : null,
         );

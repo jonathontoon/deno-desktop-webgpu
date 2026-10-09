@@ -3,13 +3,13 @@
  *
  * @module
  */
-import { CANVAS_OBSERVED_BOX } from "../../constants.ts";
-import { Singleton } from "../../singleton.ts";
-import type { CanvasDelegate } from "../../types.ts";
+import { CANVAS_OBSERVED_BOX } from "./constants.ts";
+import { Singleton } from "./singleton.ts";
+import type { FrameHandler } from "./types.ts";
 
 /**
  * Owns the canvas that WebGPU draws to. It keeps the size of the drawing
- * surface correct and asks its delegate for a frame before each screen
+ * surface correct and gives each frame to a handler before each screen
  * refresh.
  *
  * @remarks
@@ -17,7 +17,7 @@ import type { CanvasDelegate } from "../../types.ts";
  * gives the size of the canvas on the screen in device pixels. It reports a
  * new size when the window changes size, and when the window moves to a screen
  * with a different pixel ratio. The canvas keeps the newest size and applies it
- * at the start of the next frame, just before the delegate draws. A change of
+ * at the start of the next frame, just before the handler draws. A change of
  * the size clears the canvas. If it happened after the drawing of a frame, the
  * page would show a cleared canvas. The frame loop uses `requestAnimationFrame`,
  * so the browser sets the speed of the frames and pauses them when the window
@@ -25,16 +25,7 @@ import type { CanvasDelegate } from "../../types.ts";
  */
 export class Canvas {
   /** Keeps the one instance. */
-  private static readonly holder = new Singleton<Canvas>("Canvas");
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When no `Canvas` exists yet.
-   */
-  public static get shared(): Canvas {
-    return Canvas.holder.get();
-  }
+  private static readonly holder = new Singleton("Canvas");
 
   /** The observer that reports the size of the canvas. */
   private readonly sizeObserver: ResizeObserver;
@@ -42,11 +33,14 @@ export class Canvas {
   /** `true` while the frame loop runs. */
   private running = false;
 
+  /** The data about the frame. Each frame writes new values into it. */
+  private readonly frame = { time: 0, aspectRatio: 1 };
+
   /** The id of the next frame request. It is `undefined` when none waits. */
   private frameRequest: number | undefined;
 
-  /** The object that draws the frames. It is `undefined` until `start` runs. */
-  private delegate: CanvasDelegate | undefined;
+  /** The function that draws the frames. It is `undefined` until `start` runs. */
+  private handler: FrameHandler | undefined;
 
   /**
    * The newest size that the observer reported, in device pixels. It is
@@ -64,7 +58,7 @@ export class Canvas {
    * @example
    * ```typescript
    * const canvas = new Canvas(element);
-   * canvas.start(delegate);
+   * canvas.start((frame) => renderer.render(scene, frame));
    * ```
    */
   public constructor(
@@ -74,7 +68,7 @@ export class Canvas {
     Canvas.holder.assertEmpty();
     this.sizeObserver = new ResizeObserver((entries) => this.resize(entries));
     this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX);
-    Canvas.holder.claim(this);
+    Canvas.holder.claim();
   }
 
   /** The width of the surface divided by its height. */
@@ -86,18 +80,18 @@ export class Canvas {
    * Start the frame loop. The first frame comes before the next screen
    * refresh. Do nothing if the loop runs.
    *
-   * @param delegate - The object that draws each frame.
+   * @param handler - The function that draws each frame.
    */
-  public start(delegate: CanvasDelegate): void {
+  public start(handler: FrameHandler): void {
     if (this.running) {
       return;
     }
-    this.delegate = delegate;
+    this.handler = handler;
     this.running = true;
     this.requestFrame();
   }
 
-  /** Stop the frame loop. The delegate gets no more frame requests. */
+  /** Stop the frame loop. The handler gets no more frames. */
   public stop(): void {
     this.running = false;
     if (this.frameRequest !== undefined) {
@@ -124,7 +118,7 @@ export class Canvas {
 
   /**
    * Give the surface the newest size. A change of the size clears the canvas, so
-   * this must happen just before the delegate draws and not after it. Do
+   * this must happen just before the handler draws and not after it. Do
    * nothing for a size that the surface has already.
    */
   private applyPendingSize(): void {
@@ -147,14 +141,17 @@ export class Canvas {
   }
 
   /**
-   * Ask the delegate to draw, then ask for the next frame if the loop runs.
+   * Give the frame to the handler, then ask for the next frame if the loop
+   * runs.
    *
    * @param time - The time of the frame, in milliseconds.
    */
   private tick(time: number): void {
     this.frameRequest = undefined;
     this.applyPendingSize();
-    this.delegate?.canvasDidRequestFrame(time);
+    this.frame.time = time;
+    this.frame.aspectRatio = this.aspectRatio;
+    this.handler?.(this.frame);
     if (this.running) {
       this.requestFrame();
     }

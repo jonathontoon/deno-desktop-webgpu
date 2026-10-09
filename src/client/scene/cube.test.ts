@@ -1,30 +1,43 @@
 /**
- * Unit tests for `Cube` and its shader file.
+ * Unit tests for `createCube` and its shader file.
  *
  * @module
  */
-import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
+  assertAlmostEquals,
+  assertEquals,
+  assertStringIncludes,
+} from "@std/assert";
+import {
+  CUBE_CAMERA_DISTANCE,
+  CUBE_FAR_PLANE,
+  CUBE_FOCAL_LENGTH,
+  CUBE_NEAR_PLANE,
+  CUBE_TILT_RATIO,
   CUBE_UNIFORM_FLOAT_COUNT,
   CUBE_VERTEX_COUNT,
   FRAGMENT_ENTRY_POINT,
+  MS_PER_SECOND,
   VERTEX_ENTRY_POINT,
-} from "../../constants.ts";
+} from "../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
-import { Cube } from "./cube.ts";
+import { Renderer } from "../gpu/renderer.ts";
+import { createCube } from "./cube.ts";
+import { Scene } from "./scene.ts";
 
 const FLOAT_BYTES = 4;
 
 /** Make a cube with a fake device. */
-function createCube() {
+function makeCube() {
   const gpu = createFakeDevice();
   const context = fake<Graphics>({
     device: gpu.device,
     format: "bgra8unorm",
+    sampleCount: 4,
   });
-  return { gpu, cube: new Cube(context) };
+  return { gpu, cube: createCube(context) };
 }
 
 Deno.test("the shader file has the entry points that the constants name", () => {
@@ -33,8 +46,7 @@ Deno.test("the shader file has the entry points that the constants name", () => 
 });
 
 Deno.test("the shader file has the uniform fields that the class writes", () => {
-  assertStringIncludes(CUBE_SHADER, "angle: f32");
-  assertStringIncludes(CUBE_SHADER, "aspectRatio: f32");
+  assertStringIncludes(CUBE_SHADER, "transform: mat4x4f");
 });
 
 /** Read the 36 corner numbers of the faces from the shader file. */
@@ -87,7 +99,7 @@ Deno.test("each triangle goes around the same way when seen from outside", () =>
 });
 
 Deno.test("the cube uses the shader file and the pixel format", () => {
-  const { gpu } = createCube();
+  const { gpu } = makeCube();
   assertEquals(gpu.shaderModuleDescriptors, [{ code: CUBE_SHADER }]);
   assertEquals(gpu.pipelineDescriptors[0].fragment?.targets, [
     { format: "bgra8unorm" },
@@ -95,7 +107,7 @@ Deno.test("the cube uses the shader file and the pixel format", () => {
 });
 
 Deno.test("the cube does not draw the faces that point away", () => {
-  const { gpu } = createCube();
+  const { gpu } = makeCube();
   assertEquals(gpu.pipelineDescriptors[0].primitive, {
     topology: "triangle-list",
     cullMode: "back",
@@ -103,8 +115,13 @@ Deno.test("the cube does not draw the faces that point away", () => {
   });
 });
 
+Deno.test("the cube draws with the number of samples of the graphics", () => {
+  const { gpu } = makeCube();
+  assertEquals(gpu.pipelineDescriptors[0].multisample, { count: 4 });
+});
+
 Deno.test("the cube makes a buffer for its uniform values", () => {
-  const { gpu } = createCube();
+  const { gpu } = makeCube();
   assertEquals(
     gpu.bufferDescriptors[0].size,
     CUBE_UNIFORM_FLOAT_COUNT * FLOAT_BYTES,
@@ -112,14 +129,126 @@ Deno.test("the cube makes a buffer for its uniform values", () => {
 });
 
 Deno.test("the cube draws 36 vertices", () => {
-  const { gpu, cube } = createCube();
+  const { gpu, cube } = makeCube();
   gpu.events.length = 0;
   cube.draw(gpu.pass, { time: 0, aspectRatio: 1 });
   assertEquals(gpu.events.at(-1), "draw:36");
 });
 
-Deno.test("the uniform values are the angle and the aspect ratio", () => {
-  const { gpu, cube } = createCube();
+/** Read the half edge of the cube from the shader file. */
+function readHalfEdge(): number {
+  return Number(CUBE_SHADER.match(/const HALF_EDGE = ([\d.]+);/)?.[1]);
+}
+
+/** Give the position of each of the 8 corners of the cube, as the shader does. */
+function cornerPositions(): [number, number, number][] {
+  const edge = 2 * readHalfEdge();
+  return [0, 1, 2, 3, 4, 5, 6, 7].map((corner) => [
+    ((corner & 1) - 0.5) * edge,
+    (((corner >> 1) & 1) - 0.5) * edge,
+    (((corner >> 2) & 1) - 0.5) * edge,
+  ]);
+}
+
+/**
+ * Compute the place of a corner in the window, step by step. This is the
+ * answer that the matrix must give.
+ */
+function expectedPosition(
+  [x, y, z]: [number, number, number],
+  time: number,
+  aspectRatio: number,
+): number[] {
+  const angle = time / MS_PER_SECOND;
+  const turned = [
+    x * Math.cos(angle) + z * Math.sin(angle),
+    y,
+    -x * Math.sin(angle) + z * Math.cos(angle),
+  ];
+  const tip = angle * CUBE_TILT_RATIO;
+  const tipped = [
+    turned[0],
+    turned[1] * Math.cos(tip) - turned[2] * Math.sin(tip),
+    turned[1] * Math.sin(tip) + turned[2] * Math.cos(tip),
+  ];
+  const depth = tipped[2] + CUBE_CAMERA_DISTANCE;
+  const range = CUBE_FAR_PLANE - CUBE_NEAR_PLANE;
+  return [
+    tipped[0] * CUBE_FOCAL_LENGTH / aspectRatio,
+    tipped[1] * CUBE_FOCAL_LENGTH,
+    depth * CUBE_FAR_PLANE / range - CUBE_FAR_PLANE * CUBE_NEAR_PLANE / range,
+    depth,
+  ];
+}
+
+/** Multiply a corner by a 4 by 4 matrix that is in column order. */
+function transform(
+  matrix: readonly number[],
+  [x, y, z]: [number, number, number],
+): number[] {
+  const corner = [x, y, z, 1];
+  return [0, 1, 2, 3].map((row) =>
+    corner.reduce(
+      (sum, value, column) => sum + matrix[column * 4 + row] * value,
+      0,
+    )
+  );
+}
+
+Deno.test("the uniform values are one matrix of 16 numbers", () => {
+  const { gpu, cube } = makeCube();
   cube.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
-  assertEquals(gpu.writes[0].data, [2, 1.5]);
+  assertEquals(gpu.writes[0].data.length, CUBE_UNIFORM_FLOAT_COUNT);
+});
+
+Deno.test("the matrix puts each corner where the step by step math puts it", () => {
+  const times = [0, 1234, 7000, 3600 * MS_PER_SECOND * 30 + 1500];
+  const aspectRatios = [1, 0.75, 1.5];
+  for (const time of times) {
+    for (const aspectRatio of aspectRatios) {
+      const { gpu, cube } = makeCube();
+      cube.draw(gpu.pass, { time, aspectRatio });
+      const matrix = gpu.writes[0].data;
+      for (const corner of cornerPositions()) {
+        const actual = transform(matrix, corner);
+        const expected = expectedPosition(corner, time, aspectRatio);
+        actual.forEach((value, index) =>
+          assertAlmostEquals(value, expected[index], 1e-5)
+        );
+      }
+    }
+  }
+});
+
+Deno.test("the cube is in front of the camera", () => {
+  const { gpu, cube } = makeCube();
+  for (const time of [0, 1234, 7000]) {
+    cube.draw(gpu.pass, { time, aspectRatio: 1 });
+    const matrix = gpu.writes.at(-1)?.data ?? [];
+    for (const corner of cornerPositions()) {
+      assertEquals(transform(matrix, corner)[3] > 0, true);
+    }
+  }
+});
+
+Deno.test("a scene with the cube draws 36 vertices through a renderer", () => {
+  const gpu = createFakeDevice();
+  const graphics = fake<Graphics>({
+    device: gpu.device,
+    format: "bgra8unorm",
+    sampleCount: 4,
+    currentView: () => gpu.textureView,
+    multisampleView: () => gpu.textureView,
+  });
+  const scene = new Scene();
+  scene.add(createCube(graphics));
+  const renderer = new Renderer(graphics, { r: 0, g: 0, b: 0, a: 1 });
+
+  renderer.render(scene, { time: 2000, aspectRatio: 1.5 });
+
+  assertEquals(gpu.submissions.length, 1);
+  assertEquals(gpu.events.filter((event) => event.startsWith("draw:")), [
+    "draw:36",
+  ]);
+  assertEquals(gpu.writes.at(-1)?.data.length, CUBE_UNIFORM_FLOAT_COUNT);
 });

@@ -6,7 +6,7 @@
  */
 import { assertEquals } from "@std/assert";
 import { stub } from "@std/testing/mock";
-import { fake } from "../testing/fakes.ts";
+import { fake } from "../../testing/fakes.ts";
 import { diskFiles } from "./disk.ts";
 
 Deno.test("diskFiles", async (t) => {

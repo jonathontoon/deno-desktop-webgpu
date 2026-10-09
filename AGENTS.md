@@ -167,11 +167,10 @@ The app is a compiled program, and it has no permission unless the start command
 gives it. So `deno task dev` starts the app with `--allow-read` for these three
 files only. Without the flag, the app asks for the permission at each start.
 
-The program draws with WebGPU (`WebGPU` in `src/client/gpu/`). WebGPU needs a
-GPU and a driver that support it. If the computer has none, `showAlert` shows an
-error. `WebGPU` implements the `Backend` protocol, and `selectBackend` in
-`src/client/backend.ts` makes the backend. `Canvas` does not know
-which backend it has.
+The program draws with WebGPU. `Graphics`, `Renderer`, and `Pipeline` in
+`src/client/gpu/` use it. `main.ts` makes them and the scene. WebGPU needs a GPU
+and a driver that support it. If the computer has none, `showAlert` shows an
+error.
 
 `Canvas` reads the size of the canvas in device pixels from a `ResizeObserver`
 with the box `device-pixel-content-box`. Chromium supports this box. A web view
@@ -196,29 +195,29 @@ When a Deno release has the fix, do these steps:
 3. Make `Canvas` use the native window and its surface.
 4. Change this section and the rules for changes.
 
-| Path                       | Purpose                                                           |
-| -------------------------- | ----------------------------------------------------------------- |
-| `src/desktop/app.ts`       | Deno entry point. It opens the window and serves the page.        |
-| `src/desktop/server/`      | Runs in the Deno process. It serves the page and, in              |
-|                            | development mode, reads the page files from the disk.             |
-| `src/desktop/dev/`         | Runs `deno task dev`: it bundles, and it starts the app.          |
-| `src/desktop/constants.ts` | The fixed values of the Deno side.                                |
-| `src/desktop/types.ts`     | The types and protocols of the Deno side.                         |
-| `src/constants.ts`         | The fixed values that both sides use.                             |
-| `src/client/`              | Runs in the page. It has the entry point `main.ts`, the page      |
-|                            | files `index.html` and `styles.css`, `canvas.ts` (`Canvas`),      |
-|                            | `alert.ts` (`showAlert`), `backend.ts` (`selectBackend`), and     |
-|                            | the files and folders below:                                      |
-| `src/client/development/`  | `Meter` and `reloadOnChange`. `main.ts` uses them only in         |
-|                            | development mode.                                                 |
-| `src/client/constants.ts`  | The fixed values of the page.                                     |
-| `src/client/types.ts`      | The types and protocols of the page.                              |
-| `src/client/singleton.ts`  | The `Singleton` holder for classes that own a unique resource.    |
-| `src/client/gpu/`          | The WebGPU backend: `WebGPU`, `Graphics`, `Renderer`, `Pipeline`. |
-| `src/client/scene/`        | `Scene`, `createCube`, and the cube shader.                       |
-| `src/testing/`             | Fake GPU and canvas objects for the unit tests.                   |
-| `src/**/*.test.ts`         | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`                | Deno settings, tasks, and the `cef` backend.                      |
+| Path                       | Purpose                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| `src/desktop/app.ts`       | Deno entry point. It opens the window and serves the page.     |
+| `src/desktop/server/`      | Runs in the Deno process. It serves the page and, in           |
+|                            | development mode, reads the page files from the disk.          |
+| `src/desktop/dev/`         | Runs `deno task dev`: it bundles, and it starts the app.       |
+| `src/desktop/constants.ts` | The fixed values of the Deno side.                             |
+| `src/desktop/types.ts`     | The types and protocols of the Deno side.                      |
+| `src/constants.ts`         | The fixed values that both sides use.                          |
+| `src/client/`              | Runs in the page. It has the entry point `main.ts`, the page   |
+|                            | files `index.html` and `styles.css`, `canvas.ts` (`Canvas`),   |
+|                            | `alert.ts` (`showAlert`), and                                  |
+|                            | the files and folders below:                                   |
+| `src/client/development/`  | `Meter` and `reloadOnChange`. `main.ts` uses them only in      |
+|                            | development mode.                                              |
+| `src/client/constants.ts`  | The fixed values of the page.                                  |
+| `src/client/types.ts`      | The types and protocols of the page.                           |
+| `src/client/singleton.ts`  | The `Singleton` holder for classes that own a unique resource. |
+| `src/client/gpu/`          | The WebGPU code: `Graphics`, `Renderer`, and `Pipeline`.       |
+| `src/client/scene/`        | `Scene`, `createCube`, and the cube shader.                    |
+| `src/testing/`             | Fake GPU and canvas objects for the unit tests.                |
+| `src/**/*.test.ts`         | The unit tests. Each one is next to the file that it tests.    |
+| `deno.json`                | Deno settings, tasks, and the `cef` backend.                   |
 
 ## Commands
 
@@ -287,5 +286,3 @@ failed check stops the commit. GitHub runs the same checks on each push
 8. Write shader code in `.wgsl` files in `src/`. Import them as text:
    `import CODE from "./file.wgsl" with { type: "text" };`
    Do not put shader code in `.ts` files.
-9. A new drawing method is a new class that implements `Backend`. Add it to
-   `selectBackend`. Do not let `Canvas` know which backend it has.

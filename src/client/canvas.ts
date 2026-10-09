@@ -58,7 +58,7 @@ export class Canvas {
    * @example
    * ```typescript
    * const canvas = new Canvas(element);
-   * canvas.start((frame) => backend.render(frame));
+   * canvas.start((frame) => renderer.render(scene, frame));
    * ```
    */
   public constructor(

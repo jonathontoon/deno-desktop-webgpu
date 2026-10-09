@@ -23,7 +23,9 @@ import {
 import type { Graphics } from "../gpu/graphics.ts";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import CUBE_SHADER from "./cube.wgsl" with { type: "text" };
+import { Renderer } from "../gpu/renderer.ts";
 import { createCube } from "./cube.ts";
+import { Scene } from "./scene.ts";
 
 const FLOAT_BYTES = 4;
 
@@ -227,4 +229,26 @@ Deno.test("the cube is in front of the camera", () => {
       assertEquals(transform(matrix, corner)[3] > 0, true);
     }
   }
+});
+
+Deno.test("a scene with the cube draws 36 vertices through a renderer", () => {
+  const gpu = createFakeDevice();
+  const graphics = fake<Graphics>({
+    device: gpu.device,
+    format: "bgra8unorm",
+    sampleCount: 4,
+    currentView: () => gpu.textureView,
+    multisampleView: () => gpu.textureView,
+  });
+  const scene = new Scene();
+  scene.add(createCube(graphics));
+  const renderer = new Renderer(graphics, { r: 0, g: 0, b: 0, a: 1 });
+
+  renderer.render(scene, { time: 2000, aspectRatio: 1.5 });
+
+  assertEquals(gpu.submissions.length, 1);
+  assertEquals(gpu.events.filter((event) => event.startsWith("draw:")), [
+    "draw:36",
+  ]);
+  assertEquals(gpu.writes.at(-1)?.data.length, CUBE_UNIFORM_FLOAT_COUNT);
 });

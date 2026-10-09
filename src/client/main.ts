@@ -1,6 +1,6 @@
 /**
  * Entry point of the web page. The page loads it as a script. It finds the
- * canvas, chooses the drawing method, and runs the render loop. If the start
+ * canvas, builds the scene, and runs the render loop. If the start
  * fails, it shows the error in the page. In development mode, it also shows the
  * meter, and it loads the page again when a file changes.
  *
@@ -8,15 +8,19 @@
  */
 import {
   CANVAS_ELEMENT_ID,
+  CLEAR_COLOR,
   ERROR_ELEMENT_ID,
   METER_ELEMENT_ID,
 } from "./constants.ts";
 import { DEV_ATTRIBUTE, VERSION_ATTRIBUTE } from "../constants.ts";
 import { showAlert } from "./alert.ts";
-import { selectBackend } from "./backend.ts";
 import { Canvas } from "./canvas.ts";
 import { Meter } from "./development/meter.ts";
 import { reloadOnChange } from "./development/reload.ts";
+import { Graphics, requestDevice } from "./gpu/graphics.ts";
+import { Renderer } from "./gpu/renderer.ts";
+import { createCube } from "./scene/cube.ts";
+import { Scene } from "./scene/scene.ts";
 
 const canvasElement = document.getElementById(CANVAS_ELEMENT_ID);
 const message = document.getElementById(ERROR_ELEMENT_ID);
@@ -30,7 +34,10 @@ if (
 }
 
 const main = async (): Promise<void> => {
-  const backend = await selectBackend(canvasElement);
+  const graphics = new Graphics(await requestDevice(), canvasElement);
+  const scene = new Scene();
+  scene.add(createCube(graphics));
+  const renderer = new Renderer(graphics, CLEAR_COLOR);
   if (document.body.hasAttribute(DEV_ATTRIBUTE)) {
     meterElement.hidden = false;
     new Meter(meterElement, canvasElement).start();
@@ -39,7 +46,7 @@ const main = async (): Promise<void> => {
       () => location.reload(),
     );
   }
-  new Canvas(canvasElement).start((frame) => backend.render(frame));
+  new Canvas(canvasElement).start((frame) => renderer.render(scene, frame));
 };
 
 main().catch((error) => showAlert(message, error));

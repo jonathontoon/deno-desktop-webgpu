@@ -80,14 +80,6 @@ Deno.test("requestDevice", async (t) => {
 });
 
 Deno.test("Graphics", async (t) => {
-  await t.step("shared fails before a Graphics exists", () => {
-    assertThrows(
-      () => Graphics.shared,
-      Error,
-      "Graphics is not initialized.",
-    );
-  });
-
   const fakeDevice = createFakeDevice();
   const restore = installFakeNavigatorGPU({
     device: fakeDevice.device,
@@ -119,10 +111,6 @@ Deno.test("Graphics", async (t) => {
         format: "rgba8unorm",
         alphaMode: "opaque",
       }]);
-    });
-
-    await t.step("shared gives the instance", () => {
-      assertStrictEquals(Graphics.shared, graphics);
     });
 
     await t.step("a second Graphics fails and leaves the canvas alone", () => {

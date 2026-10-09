@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { FakeTime } from "@std/testing/time";
 import { METER_INTERVAL_MS, METER_TICK_MS } from "../../constants.ts";
 import {
@@ -15,25 +15,9 @@ import {
 import { Meter } from "./meter.ts";
 
 Deno.test("Meter", async (t) => {
-  await t.step("shared fails before a Meter exists", () => {
-    assertThrows(() => Meter.shared, Error, "Meter is not initialized.");
-  });
-
   const target = fake<HTMLElement>({ textContent: "" });
   const fakeSurface = createFakeSurface();
   const meter = new Meter(target, fakeSurface.surface);
-
-  await t.step("shared gives the instance", () => {
-    assertStrictEquals(Meter.shared, meter);
-  });
-
-  await t.step("a second Meter fails", () => {
-    assertThrows(
-      () => new Meter(target, createFakeSurface().surface),
-      Error,
-      "Meter exists already.",
-    );
-  });
 
   const frames = installFakeAnimationFrames();
   const observers = installFakeResizeObserver();
@@ -121,6 +105,28 @@ Deno.test("Meter", async (t) => {
         "canvas 1600x1200",
       );
     });
+  } finally {
+    observers.restore();
+    frames.restore();
+  }
+});
+
+Deno.test("two meters show their own numbers", async () => {
+  const first = fake<HTMLElement>({ textContent: "" });
+  const second = fake<HTMLElement>({ textContent: "" });
+  const frames = installFakeAnimationFrames();
+  const observers = installFakeResizeObserver();
+  using time = new FakeTime();
+  try {
+    new Meter(first, createFakeSurface().surface).start();
+    frames.step(1000);
+    new Meter(second, createFakeSurface().surface).start();
+    frames.step(1016);
+    for (let passed = 0; passed < METER_INTERVAL_MS; passed += METER_TICK_MS) {
+      await time.tickAsync(METER_TICK_MS);
+    }
+    assertEquals(String(first.textContent).split("\n")[0], "frames/s 2");
+    assertEquals(String(second.textContent).split("\n")[0], "frames/s 1");
   } finally {
     observers.restore();
     frames.restore();

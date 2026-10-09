@@ -5,39 +5,32 @@
  */
 
 /**
- * Holds the one instance of a class.
+ * Guards a class that can have only one instance.
  *
  * @remarks
  * Each singleton class owns one holder in a `private static` field. The
  * constructor of the class has two calls. The first line calls `assertEmpty`,
  * so a second `new` fails before it does any work. The last line calls `claim`,
- * so the holder keeps only an object that the constructor made without a
- * failure. `get` fails until `claim` has run.
- *
- * @typeParam T - The type of the instance that the holder keeps.
+ * so the holder is full only after a constructor ran without a failure.
  *
  * @example
  * ```typescript
- * class Logger {
- *   private static readonly holder = new Singleton<Logger>("Logger");
- *
- *   public static get shared(): Logger {
- *     return Logger.holder.get();
- *   }
+ * class Window {
+ *   private static readonly holder = new Singleton("Window");
  *
  *   public constructor() {
- *     Logger.holder.assertEmpty();
- *     Logger.holder.claim(this);
+ *     Window.holder.assertEmpty();
+ *     Window.holder.claim();
  *   }
  * }
  * ```
  */
-export class Singleton<T> {
-  /** The instance. It is `undefined` until `claim` runs. */
-  private instance: T | undefined;
+export class Singleton {
+  /** `true` after `claim` has run. */
+  private claimed = false;
 
   /**
-   * Make a holder with no instance in it.
+   * Make an empty holder.
    *
    * @param name - The name of the class. Error messages use it.
    */
@@ -46,35 +39,21 @@ export class Singleton<T> {
   /**
    * Make sure that the holder is empty.
    *
-   * @throws {Error} When the holder already has an instance.
+   * @throws {Error} When the holder is full.
    */
   public assertEmpty(): void {
-    if (this.instance !== undefined) {
+    if (this.claimed) {
       throw new Error(`${this.name} exists already.`);
     }
   }
 
   /**
-   * Keep the instance.
+   * Fill the holder.
    *
-   * @param instance - The object that the constructor made.
-   * @throws {Error} When the holder already has an instance.
+   * @throws {Error} When the holder is full.
    */
-  public claim(instance: T): void {
+  public claim(): void {
     this.assertEmpty();
-    this.instance = instance;
-  }
-
-  /**
-   * Give the instance.
-   *
-   * @returns The instance that `claim` kept.
-   * @throws {Error} When `claim` has not run yet.
-   */
-  public get(): T {
-    if (this.instance === undefined) {
-      throw new Error(`${this.name} is not initialized.`);
-    }
-    return this.instance;
+    this.claimed = true;
   }
 }

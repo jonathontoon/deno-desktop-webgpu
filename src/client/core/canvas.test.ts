@@ -24,14 +24,6 @@ function createHandler(received: FrameInfo[]): FrameHandler {
 }
 
 Deno.test("Canvas", async (t) => {
-  await t.step("shared fails before a Canvas exists", () => {
-    assertThrows(
-      () => Canvas.shared,
-      Error,
-      "Canvas is not initialized.",
-    );
-  });
-
   const observers = installFakeResizeObserver();
   const frames = installFakeAnimationFrames();
   const fake = createFakeSurface();
@@ -39,10 +31,6 @@ Deno.test("Canvas", async (t) => {
 
   await t.step("the constructor keeps the canvas as the surface", () => {
     assertStrictEquals(canvas.surface, fake.surface);
-  });
-
-  await t.step("shared gives the instance", () => {
-    assertStrictEquals(Canvas.shared, canvas);
   });
 
   await t.step("a second Canvas fails", () => {

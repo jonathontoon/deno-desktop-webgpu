@@ -25,16 +25,7 @@ import type { FrameHandler } from "../../types.ts";
  */
 export class Canvas {
   /** Keeps the one instance. */
-  private static readonly holder = new Singleton<Canvas>("Canvas");
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When no `Canvas` exists yet.
-   */
-  public static get shared(): Canvas {
-    return Canvas.holder.get();
-  }
+  private static readonly holder = new Singleton("Canvas");
 
   /** The observer that reports the size of the canvas. */
   private readonly sizeObserver: ResizeObserver;
@@ -74,7 +65,7 @@ export class Canvas {
     Canvas.holder.assertEmpty();
     this.sizeObserver = new ResizeObserver((entries) => this.resize(entries));
     this.sizeObserver.observe(surface, CANVAS_OBSERVED_BOX);
-    Canvas.holder.claim(this);
+    Canvas.holder.claim();
   }
 
   /** The width of the surface divided by its height. */

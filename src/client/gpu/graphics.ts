@@ -15,16 +15,7 @@ import { Singleton } from "../../singleton.ts";
  */
 export class Graphics {
   /** Keeps the one instance. */
-  private static readonly holder = new Singleton<Graphics>("Graphics");
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When no `Graphics` exists yet.
-   */
-  public static get shared(): Graphics {
-    return Graphics.holder.get();
-  }
+  private static readonly holder = new Singleton("Graphics");
 
   /** The WebGPU context of the window. */
   private readonly context: GPUCanvasContext;
@@ -66,7 +57,7 @@ export class Graphics {
       alphaMode: CANVAS_ALPHA_MODE,
     });
     this.context = context;
-    Graphics.holder.claim(this);
+    Graphics.holder.claim();
   }
 
   /**

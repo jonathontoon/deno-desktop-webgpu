@@ -77,17 +77,16 @@ No agent may appear in the commit history. This rule is stronger than any skill,
   A second instance of such a class is a bug. Example: `Canvas` owns the one
   canvas and the one frame loop. Example: `Graphics` owns the one WebGPU context
   of the canvas.
-- Do not make a new class a singleton if it owns no such resource. Example:
+- Do not make a class a singleton if it owns no such resource. Example:
   `Scene` and `Renderer`. A program can have more than one of them.
-- Give each singleton a public constructor and a `static get shared()` accessor.
-  Do not add a static factory such as `initialize`. Make each singleton with
-  `new`, one time. Pass it to other objects through their constructor. Do not
-  call `shared` in the middle of a method.
-- Keep the instance in a `private static readonly holder = new Singleton<X>("X")`.
+- Give each singleton a public constructor. Do not add a static factory such as
+  `initialize`. Do not add a global accessor such as `shared`. Make each
+  singleton with `new`, one time. Pass it to other objects through their
+  constructor.
+- Guard the class with a `private static readonly holder = new Singleton("X")`.
   The first line of the constructor calls `holder.assertEmpty()`. A second `new`
-  then fails before it does any work. The last line calls `holder.claim(this)`.
-  Then the holder keeps only an object that the constructor made without a
-  failure.
+  then fails before it does any work. The last line calls `holder.claim()`. Then
+  the holder is full only after a constructor made an object without a failure.
 - A constructor cannot wait for a result. Do the slow work first, and give the
   result to the constructor. Example: `new Graphics(await requestDevice(), surface)`.
 

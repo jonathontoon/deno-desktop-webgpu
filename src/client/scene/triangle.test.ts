@@ -29,6 +29,7 @@ function makeTriangle() {
   const context = fake<Graphics>({
     device: gpu.device,
     format: "bgra8unorm",
+    sampleCount: 4,
   });
   return { gpu, triangle: createTriangle(context) };
 }
@@ -50,6 +51,11 @@ Deno.test("the triangle uses the shader file and the pixel format", () => {
   assertEquals(gpu.pipelineDescriptors[0].fragment?.targets, [
     { format: "bgra8unorm" },
   ]);
+});
+
+Deno.test("the triangle draws with the number of samples of the graphics", () => {
+  const { gpu } = makeTriangle();
+  assertEquals(gpu.pipelineDescriptors[0].multisample, { count: 4 });
 });
 
 Deno.test("the triangle makes a buffer for its uniform values", () => {

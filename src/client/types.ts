@@ -46,6 +46,8 @@ export interface PipelineOptions {
   readonly device: GPUDevice;
   /** The pixel format of the window. */
   readonly format: GPUTextureFormat;
+  /** The number of samples for each pixel. It must be the number of the render pass. */
+  readonly sampleCount: number;
   /** The WGSL source code of the shader. */
   readonly shaderCode: string;
   /** The number of vertices to draw. */

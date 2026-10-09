@@ -14,6 +14,9 @@ export const CANVAS_ALPHA_MODE: GPUCanvasAlphaMode = "opaque";
 /** Which GPU the program asks for. `"high-performance"` asks for the fast GPU on a computer that has more than one. */
 export const GPU_POWER_PREFERENCE: GPUPowerPreference = "high-performance";
 
+/** The number of samples for each pixel. More samples make smooth edges. 4 is the number that every GPU supports. */
+export const SAMPLE_COUNT = 4;
+
 /** The color that fills the window before each frame. Each value is from 0 to 1. */
 export const CLEAR_COLOR: GPUColorDict = { r: 0, g: 0, b: 0, a: 1 };
 

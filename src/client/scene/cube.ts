@@ -45,6 +45,7 @@ export function createCube(graphics: Graphics): Drawable {
     vertexCount: CUBE_VERTEX_COUNT,
     uniformFloatCount: CUBE_UNIFORM_FLOAT_COUNT,
     writeUniforms: writeCubeUniforms,
+    sampleCount: graphics.sampleCount,
     cullMode: "back",
     frontFace: "cw",
   });

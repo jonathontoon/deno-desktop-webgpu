@@ -30,6 +30,7 @@ import type {
  *   writeUniforms: (frame, uniforms) => {
  *     uniforms[0] = frame.time;
  *   },
+ *   sampleCount: graphics.sampleCount,
  * });
  * ```
  */
@@ -59,7 +60,8 @@ export class Pipeline implements Drawable {
    * Make the pipeline, the uniform buffer, and the bind group.
    *
    * @param options - The device, the pixel format, the shader code, the sizes,
-   * the function that fills the uniform values, and the face culling.
+   * the function that fills the uniform values, the number of samples for each
+   * pixel, and the face culling.
    */
   public constructor(options: PipelineOptions) {
     const {
@@ -69,6 +71,7 @@ export class Pipeline implements Drawable {
       vertexCount,
       uniformFloatCount,
       writeUniforms,
+      sampleCount,
       cullMode = "none",
       frontFace = "ccw",
     } = options;
@@ -86,6 +89,7 @@ export class Pipeline implements Drawable {
         targets: [{ format }],
       },
       primitive: { topology: "triangle-list", cullMode, frontFace },
+      multisample: { count: sampleCount },
     });
 
     this.uniforms = new Float32Array(uniformFloatCount);

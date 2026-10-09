@@ -39,6 +39,10 @@ export interface FakeDevice {
   readonly bufferDescriptors: GPUBufferDescriptor[];
   /** The arguments of each `createBindGroup` call. */
   readonly bindGroupDescriptors: GPUBindGroupDescriptor[];
+  /** The arguments of each `createTexture` call. */
+  readonly textureDescriptors: GPUTextureDescriptor[];
+  /** The view that each texture from `createTexture` gives. */
+  readonly textureView: GPUTextureView;
   /**
    * The values of the arguments of each `beginRenderPass` call, as they were
    * at the time of the call.
@@ -91,6 +95,8 @@ export function createFakeDevice(): FakeDevice {
   const pipelineDescriptors: GPURenderPipelineDescriptor[] = [];
   const bufferDescriptors: GPUBufferDescriptor[] = [];
   const bindGroupDescriptors: GPUBindGroupDescriptor[] = [];
+  const textureDescriptors: GPUTextureDescriptor[] = [];
+  const textureView = fake<GPUTextureView>({});
   const passDescriptors: GPURenderPassDescriptor[] = [];
   const passDescriptorObjects: GPURenderPassDescriptor[] = [];
   const writes: BufferWrite[] = [];
@@ -125,6 +131,14 @@ export function createFakeDevice(): FakeDevice {
     createBindGroup: (descriptor: GPUBindGroupDescriptor) => {
       bindGroupDescriptors.push(descriptor);
       return bindGroup;
+    },
+    createTexture: (descriptor: GPUTextureDescriptor) => {
+      textureDescriptors.push(descriptor);
+      events.push("createTexture");
+      return fake<GPUTexture>({
+        createView: () => textureView,
+        destroy: () => void events.push("texture.destroy"),
+      });
     },
     createCommandEncoder: () => {
       events.push("createCommandEncoder");
@@ -169,6 +183,8 @@ export function createFakeDevice(): FakeDevice {
     pipelineDescriptors,
     bufferDescriptors,
     bindGroupDescriptors,
+    textureDescriptors,
+    textureView,
     passDescriptors,
     passDescriptorObjects,
     writes,
@@ -213,7 +229,11 @@ export function createFakeSurface(hasContext = true): FakeSurface {
       configure: (configuration: GPUCanvasConfiguration) => {
         configurations.push(configuration);
       },
-      getCurrentTexture: () => ({ createView: () => view }),
+      getCurrentTexture: () => ({
+        createView: () => view,
+        width: surface.width,
+        height: surface.height,
+      }),
     })
     : null;
 

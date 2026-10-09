@@ -33,6 +33,7 @@ function makeCube() {
   const context = fake<Graphics>({
     device: gpu.device,
     format: "bgra8unorm",
+    sampleCount: 4,
   });
   return { gpu, cube: createCube(context) };
 }
@@ -110,6 +111,11 @@ Deno.test("the cube does not draw the faces that point away", () => {
     cullMode: "back",
     frontFace: "cw",
   });
+});
+
+Deno.test("the cube draws with the number of samples of the graphics", () => {
+  const { gpu } = makeCube();
+  assertEquals(gpu.pipelineDescriptors[0].multisample, { count: 4 });
 });
 
 Deno.test("the cube makes a buffer for its uniform values", () => {

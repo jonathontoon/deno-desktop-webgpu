@@ -15,9 +15,11 @@ const FRAME: FrameInfo = { time: 12, aspectRatio: 2 };
 Deno.test("Renderer", async (t) => {
   const fakeDevice = createFakeDevice();
   const view = fake<GPUTextureView>({});
+  const samplesView = fake<GPUTextureView>({});
   const graphics = fake<Graphics>({
     device: fakeDevice.device,
     currentView: () => view,
+    multisampleView: () => samplesView,
   });
   const renderer = new Renderer(graphics, CLEAR_COLOR);
 
@@ -27,11 +29,21 @@ Deno.test("Renderer", async (t) => {
 
     const [descriptor] = fakeDevice.passDescriptors;
     const [attachment] = [...descriptor.colorAttachments];
-    assertStrictEquals(attachment?.view, view);
     assertEquals(attachment?.clearValue, CLEAR_COLOR);
     assertEquals(attachment?.loadOp, "clear");
-    assertEquals(attachment?.storeOp, "store");
   });
+
+  await t.step(
+    "render draws to the samples and mixes them into the window",
+    () => {
+      renderer.render({ draw: () => {} }, FRAME);
+      const descriptor = fakeDevice.passDescriptors.at(-1);
+      const [attachment] = [...(descriptor?.colorAttachments ?? [])];
+      assertStrictEquals(attachment?.view, samplesView);
+      assertStrictEquals(attachment?.resolveTarget, view);
+      assertEquals(attachment?.storeOp, "discard");
+    },
+  );
 
   await t.step("render gives the pass and the frame to the drawable", () => {
     let receivedPass: unknown;
@@ -81,6 +93,7 @@ Deno.test("Renderer", async (t) => {
       fake<Graphics>({
         device: fakeDevice.device,
         currentView: () => views[next++],
+        multisampleView: () => samplesView,
       }),
       CLEAR_COLOR,
     );
@@ -88,7 +101,7 @@ Deno.test("Renderer", async (t) => {
     changing.render({ draw: () => {} }, FRAME);
     changing.render({ draw: () => {} }, FRAME);
     const drawn = fakeDevice.passDescriptors.map((descriptor) =>
-      [...descriptor.colorAttachments][0]?.view
+      [...descriptor.colorAttachments][0]?.resolveTarget
     );
     assertStrictEquals(drawn[0], views[0]);
     assertStrictEquals(drawn[1], views[1]);

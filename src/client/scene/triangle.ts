@@ -39,6 +39,7 @@ export function createTriangle(graphics: Graphics): Drawable {
     vertexCount: TRIANGLE_VERTEX_COUNT,
     uniformFloatCount: TRIANGLE_UNIFORM_FLOAT_COUNT,
     writeUniforms: writeTriangleUniforms,
+    sampleCount: graphics.sampleCount,
   });
 }
 

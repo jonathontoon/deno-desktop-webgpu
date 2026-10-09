@@ -55,7 +55,7 @@ export class Renderer {
   public render(drawable: Drawable, frame: FrameInfo): void {
     const { device } = this.graphics;
     const encoder = device.createCommandEncoder();
-    this.setView(this.graphics.currentView());
+    this.setViews(this.graphics.multisampleView(), this.graphics.currentView());
     const pass = encoder.beginRenderPass(this.passDescriptor);
     drawable.draw(pass, frame);
     pass.end();
@@ -64,23 +64,27 @@ export class Renderer {
   }
 
   /**
-   * Give the texture view of this frame to the render pass. The first call
-   * makes the color attachment. Each later call changes only its view, so no
+   * Give the texture views of this frame to the render pass. The first call
+   * makes the color attachment. Each later call changes only its views, so no
    * new object is made.
    *
-   * @param view - The texture view that the frame draws to.
+   * @param view - The texture view with the samples. The frame draws to it.
+   * @param resolveTarget - The texture view of the window. The GPU writes the
+   * mixed color of each pixel to it. The samples are not kept.
    */
-  private setView(view: GPUTextureView): void {
+  private setViews(view: GPUTextureView, resolveTarget: GPUTextureView): void {
     const [attachment] = this.colorAttachments;
     if (attachment) {
       attachment.view = view;
+      attachment.resolveTarget = resolveTarget;
       return;
     }
     this.colorAttachments.push({
       view,
+      resolveTarget,
       clearValue: this.clearColor,
       loadOp: "clear",
-      storeOp: "store",
+      storeOp: "discard",
     });
   }
 }

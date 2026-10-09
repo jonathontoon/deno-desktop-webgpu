@@ -21,6 +21,7 @@ function createTestPipeline() {
     shaderCode: "// shader",
     vertexCount: 6,
     uniformFloatCount: 2,
+    sampleCount: 4,
     writeUniforms: (frame, uniforms) => {
       gpu.events.push("writeUniforms");
       uniforms[0] = frame.time;
@@ -50,6 +51,7 @@ Deno.test("the constructor makes a pipeline with the entry points", () => {
     cullMode: "none",
     frontFace: "ccw",
   });
+  assertEquals(descriptor.multisample, { count: 4 });
 });
 
 Deno.test("the constructor makes a uniform buffer of the right size", () => {
@@ -121,6 +123,7 @@ Deno.test("the constructor passes the face culling to the pipeline", () => {
     shaderCode: "// shader",
     vertexCount: 6,
     uniformFloatCount: 2,
+    sampleCount: 4,
     writeUniforms: () => {},
     cullMode: "back",
     frontFace: "cw",

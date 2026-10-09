@@ -20,10 +20,10 @@ import {
   TEXT_CONTENT_TYPE,
   VERSION_ATTRIBUTE,
   VERSION_PATH,
-} from "../constants.ts";
-import type { DiskFiles } from "../types.ts";
-import INDEX_HTML from "../client/index.html" with { type: "text" };
-import STYLES_CSS from "../client/styles.css" with { type: "text" };
+} from "../../constants.ts";
+import type { DiskFiles } from "../../types.ts";
+import INDEX_HTML from "../../client/index.html" with { type: "text" };
+import STYLES_CSS from "../../client/styles.css" with { type: "text" };
 
 /** One file that the server gives to the page. */
 interface PageFile {

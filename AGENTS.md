@@ -170,7 +170,7 @@ which backend it has.
 with the box `device-pixel-content-box`. Chromium supports this box. A web view
 that does not support it, such as WebKit, is not supported.
 
-The Deno side (`src/app.ts`) opens the window and serves the page. The browser
+The Deno side (`src/desktop/app.ts`) opens the window and serves the page. The browser
 side (`src/client/main.ts`) runs in the page and draws.
 
 ### TODO: go back to the `raw` backend
@@ -185,28 +185,28 @@ When a Deno release has the fix, do these steps:
 
 1. Set `"backend": "raw"` in `deno.json`.
 2. Use `Deno.BrowserWindow` and `getNativeWindow()` for the surface. Remove
-   `src/server/`, the page files in `src/client/`, and the `bundle` task.
+   `src/desktop/server/`, the page files in `src/client/`, and the `bundle` task.
 3. Make `Canvas` use the native window and its surface.
 4. Change this section and the rules for changes.
 
-| Path                | Purpose                                                           |
-| ------------------- | ----------------------------------------------------------------- |
-| `src/app.ts`        | Deno entry point. It opens the window and serves the page.        |
-| `src/server/`       | Runs in the Deno process. It serves the page and, in              |
-|                     | development mode, reads the page files from the disk.             |
-| `src/dev/`          | Runs `deno task dev`: it bundles, and it starts the app.          |
-| `src/constants.ts`  | Holds all fixed values.                                           |
-| `src/types.ts`      | Holds all shared types and protocols.                             |
-| `src/singleton.ts`  | The `Singleton` holder for classes that have one instance.        |
-| `src/client/`       | Runs in the page. It has the entry point `main.ts`, the page      |
-|                     | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`  | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
-|                     | `selectBackend`.                                                  |
-| `src/client/gpu/`   | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
-| `src/client/scene/` | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
-| `src/testing/`      | Fake GPU and canvas objects for the unit tests.                   |
-| `src/**/*.test.ts`  | The unit tests. Each one is next to the file that it tests.       |
-| `deno.json`         | Deno settings, tasks, and the `cef` backend.                      |
+| Path                  | Purpose                                                           |
+| --------------------- | ----------------------------------------------------------------- |
+| `src/desktop/app.ts`  | Deno entry point. It opens the window and serves the page.        |
+| `src/desktop/server/` | Runs in the Deno process. It serves the page and, in              |
+|                       | development mode, reads the page files from the disk.             |
+| `src/desktop/dev/`    | Runs `deno task dev`: it bundles, and it starts the app.          |
+| `src/constants.ts`    | Holds all fixed values.                                           |
+| `src/types.ts`        | Holds all shared types and protocols.                             |
+| `src/singleton.ts`    | The `Singleton` holder for classes that have one instance.        |
+| `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
+|                       | files `index.html` and `styles.css`, and these folders:           |
+| `src/client/core/`    | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
+|                       | `selectBackend`.                                                  |
+| `src/client/gpu/`     | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
+| `src/client/scene/`   | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
+| `src/testing/`        | Fake GPU and canvas objects for the unit tests.                   |
+| `src/**/*.test.ts`    | The unit tests. Each one is next to the file that it tests.       |
+| `deno.json`           | Deno settings, tasks, and the `cef` backend.                      |
 
 ## Commands
 
@@ -217,7 +217,7 @@ Run all commands with `deno task <name>`.
 | `bundle`        | Bundle `src/client/main.ts` into `dist/client.js` for the page.                                                               |
 | `dev`           | Bundle, then start the app with hot reloading. It also bundles after each change, and it stops the bundler when the app ends. |
 | `build`         | Bundle, then build the desktop app.                                                                                           |
-| `check`         | Bundle, then check the types of `src/app.ts` and of the tests.                                                                |
+| `check`         | Bundle, then check the types of `src/desktop/app.ts` and of the tests.                                                        |
 | `lint`          | Run `deno lint`.                                                                                                              |
 | `lint:fix`      | Run `deno lint --fix`.                                                                                                        |
 | `format`        | Format all files with `deno fmt`.                                                                                             |
@@ -269,7 +269,7 @@ failed check stops the commit. GitHub runs the same checks on each push
 5. Keep `"unstable": ["webgpu"]` in `deno.json`. WebGPU needs it.
 6. The frame loop in `Canvas` uses `requestAnimationFrame`. The unit tests use
    the fake functions from `installFakeAnimationFrames` in `src/testing/fakes.ts`.
-7. Keep all code in `src/`. The entry point is `src/app.ts`. Do not add a root `main.ts`.
+7. Keep all code in `src/`. The entry point is `src/desktop/app.ts`. Do not add a root `main.ts`.
    The browser code is bundled to `dist/client.js` by `deno task bundle`. Do
    not commit `dist/`.
 8. Write shader code in `.wgsl` files in `src/`. Import them as text:

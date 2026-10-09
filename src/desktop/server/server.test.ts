@@ -21,10 +21,10 @@ import {
   VERSION_ATTRIBUTE,
   VERSION_PATH,
   WINDOW_OPTIONS,
-} from "../constants.ts";
-import INDEX_HTML from "../client/index.html" with { type: "text" };
-import STYLES_CSS from "../client/styles.css" with { type: "text" };
-import type { DiskFiles } from "../types.ts";
+} from "../../constants.ts";
+import INDEX_HTML from "../../client/index.html" with { type: "text" };
+import STYLES_CSS from "../../client/styles.css" with { type: "text" };
+import type { DiskFiles } from "../../types.ts";
 import { createRequestHandler } from "./server.ts";
 
 Deno.test("index.html", async (t) => {

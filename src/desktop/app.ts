@@ -6,8 +6,8 @@
  */
 // TODO: Use the `raw` backend again when Deno fixes the macOS surface thread
 // bug (denoland/deno#36738). See "TODO" in AGENTS.md.
-import CLIENT_SCRIPT from "../dist/client.js" with { type: "text" };
-import { DEV_ARGUMENT, WINDOW_OPTIONS } from "./constants.ts";
+import CLIENT_SCRIPT from "../../dist/client.js" with { type: "text" };
+import { DEV_ARGUMENT, WINDOW_OPTIONS } from "../constants.ts";
 import { diskFiles } from "./server/disk.ts";
 import { createRequestHandler } from "./server/server.ts";
 

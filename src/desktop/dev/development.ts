@@ -7,8 +7,8 @@ import {
   BUNDLE_ARGUMENTS,
   DESKTOP_ARGUMENTS,
   WATCH_ARGUMENT,
-} from "../constants.ts";
-import type { SpawnProcess } from "../types.ts";
+} from "../../constants.ts";
+import type { SpawnProcess } from "../../types.ts";
 
 /**
  * Run the app for development: bundle the page script, bundle it again after

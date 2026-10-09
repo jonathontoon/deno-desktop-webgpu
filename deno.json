@@ -16,9 +16,9 @@
   },
   "tasks": {
     "bundle": "deno bundle --platform browser --format esm --output dist/client.js src/client/main.ts",
-    "dev": "deno run --allow-run --allow-read src/dev/main.ts",
-    "build": "deno task bundle && deno desktop -o dist/deno-desktop-webgpu src/app.ts",
-    "check": "deno task bundle && deno check --desktop src/app.ts src/dev/main.ts \"src/**/*.test.ts\"",
+    "dev": "deno run --allow-run --allow-read src/desktop/dev/main.ts",
+    "build": "deno task bundle && deno desktop -o dist/deno-desktop-webgpu src/desktop/app.ts",
+    "check": "deno task bundle && deno check --desktop src/desktop/app.ts src/desktop/dev/main.ts \"src/**/*.test.ts\"",
     "lint": "deno lint",
     "lint:fix": "deno lint --fix",
     "format": "deno fmt",

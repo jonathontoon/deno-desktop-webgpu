@@ -90,7 +90,7 @@ export const DESKTOP_ARGUMENTS: readonly string[] = [
   "desktop",
   "--hmr",
   `--allow-read=${INDEX_HTML_SOURCE},${STYLES_SOURCE},${CLIENT_SCRIPT_SOURCE}`,
-  "src/app.ts",
+  "src/desktop/app.ts",
   "dev",
 ];
 

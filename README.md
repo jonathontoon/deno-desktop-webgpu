@@ -49,8 +49,8 @@ You need a computer with a GPU that supports WebGPU.
 | `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.    |
 | `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
 |                       | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`    | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
-|                       | `selectBackend`.                                                  |
+| `src/client/core/`    | `Canvas`, `Meter`, `selectBackend`, `showAlert`, and              |
+|                       | `reloadOnChange`.                                                 |
 | `src/client/gpu/`     | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
 | `src/client/scene/`   | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`        | Fake GPU and canvas objects for the unit tests.                   |

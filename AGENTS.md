@@ -119,7 +119,7 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - Give each class and each file a name of one word. Example: `canvas.ts` has the
   class `Canvas`. Do not add a word for the kind of class, such as `Drawable`.
   Example: `Triangle`, not `TriangleDrawable`. The name of a protocol (an
-  `interface`) can have a kind word, such as `Drawable` or `CanvasDelegate`.
+  `interface`) can have a kind word, such as `Drawable`.
 - If a file name must have more than one word, use hyphens. Do not use
   underscores.
 - Use TypeScript patterns, not JavaScript patterns. Use the keywords `private`,
@@ -156,7 +156,7 @@ Hot module reloading of Deno only changes the code of the server. It does not
 change the page. So in development mode the server reads `index.html`,
 `styles.css`, and `dist/client.js` from the disk for each request, and it
 answers `/version` with a text that changes when one of them changes. The
-`Reloader` in the page asks for this text twice each second and loads the page
+`reloadOnChange` in the page asks for this text twice each second and loads the page
 again when it is not the version that the server put in the page (the attribute
 `data-version` of the `<body>`). The server takes this version before it reads
 the files, so a change in the first moments after the page loads is not lost. This is a reload of the page. It does not keep the state
@@ -166,9 +166,9 @@ gives it. So `deno task dev` starts the app with `--allow-read` for these three
 files only. Without the flag, the app asks for the permission at each start.
 
 The program draws with WebGPU (`WebGPU` in `src/client/gpu/`). WebGPU needs a
-GPU and a driver that support it. If the computer has none, `Alert` shows an
+GPU and a driver that support it. If the computer has none, `showAlert` shows an
 error. `WebGPU` implements the `Backend` protocol, and `selectBackend` in
-`src/client/core/backend.ts` makes the backend. `Application` does not know
+`src/client/core/backend.ts` makes the backend. `Canvas` does not know
 which backend it has.
 
 `Canvas` reads the size of the canvas in device pixels from a `ResizeObserver`
@@ -205,8 +205,8 @@ When a Deno release has the fix, do these steps:
 | `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.    |
 | `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
 |                       | files `index.html` and `styles.css`, and these folders:           |
-| `src/client/core/`    | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |
-|                       | `selectBackend`.                                                  |
+| `src/client/core/`    | `Canvas`, `Meter`, `selectBackend`, `showAlert`, and              |
+|                       | `reloadOnChange`.                                                 |
 | `src/client/gpu/`     | The WebGPU backend: `WebGPU`, `Graphics`, and `Renderer`.         |
 | `src/client/scene/`   | `Scene`, `Pipeline`, `Triangle`, `Cube`, and the `.wgsl` shaders. |
 | `src/testing/`        | Fake GPU and canvas objects for the unit tests.                   |
@@ -281,4 +281,4 @@ failed check stops the commit. GitHub runs the same checks on each push
    `import CODE from "./file.wgsl" with { type: "text" };`
    Do not put shader code in `.ts` files.
 9. A new drawing method is a new class that implements `Backend`. Add it to
-   `selectBackend`. Do not let `Application` know which backend it has.
+   `selectBackend`. Do not let `Canvas` know which backend it has.

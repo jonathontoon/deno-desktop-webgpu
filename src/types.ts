@@ -53,7 +53,7 @@ export interface PipelineOptions {
  * An object that draws the scene on the canvas with one drawing method.
  *
  * @remarks
- * `WebGPU` implements this protocol. `Application` does not know which backend
+ * `WebGPU` implements this protocol. The frame loop does not know which backend
  * it has, so a new drawing method does not change it.
  */
 export interface Backend {
@@ -102,12 +102,10 @@ export interface DiskFiles {
   stamp(paths: readonly string[]): Promise<string>;
 }
 
-/** The canvas tells its delegate when to draw a frame. */
-export interface CanvasDelegate {
-  /**
-   * The canvas asks for a frame. Draw one frame now.
-   *
-   * @param time - The time, in milliseconds.
-   */
-  canvasDidRequestFrame(time: number): void;
-}
+/**
+ * A function that the canvas calls before each screen refresh. It draws one
+ * frame.
+ *
+ * @param frame - The data about the frame that is in progress.
+ */
+export type FrameHandler = (frame: FrameInfo) => void;

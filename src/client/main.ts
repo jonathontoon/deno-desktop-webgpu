@@ -13,38 +13,34 @@ import {
   METER_ELEMENT_ID,
   VERSION_ATTRIBUTE,
 } from "../constants.ts";
-import { Alert } from "./core/alert.ts";
-import { Application } from "./core/application.ts";
+import { showAlert } from "./core/alert.ts";
 import { selectBackend } from "./core/backend.ts";
+import { Canvas } from "./core/canvas.ts";
 import { Meter } from "./core/meter.ts";
-import { Reloader } from "./core/reloader.ts";
+import { reloadOnChange } from "./core/reload.ts";
 
-const canvas = document.getElementById(CANVAS_ELEMENT_ID);
+const canvasElement = document.getElementById(CANVAS_ELEMENT_ID);
 const message = document.getElementById(ERROR_ELEMENT_ID);
 const meterElement = document.getElementById(METER_ELEMENT_ID);
-if (!(canvas instanceof HTMLCanvasElement) || !message || !meterElement) {
+if (
+  !(canvasElement instanceof HTMLCanvasElement) || !message || !meterElement
+) {
   throw new Error(
     `The page needs <canvas id="${CANVAS_ELEMENT_ID}"> and elements with id="${ERROR_ELEMENT_ID}" and id="${METER_ELEMENT_ID}".`,
   );
 }
 
-const errorAlert = new Alert(message);
-
-/**
- * Choose the drawing method and start to draw. In development mode, also show
- * the numbers of the meter and load the page again when a file changes.
- */
-async function main(): Promise<void> {
-  const backend = await selectBackend(canvas as HTMLCanvasElement);
+const main = async (): Promise<void> => {
+  const backend = await selectBackend(canvasElement);
   if (document.body.hasAttribute(DEV_ATTRIBUTE)) {
-    meterElement!.hidden = false;
-    new Meter(meterElement!, canvas as HTMLCanvasElement).start();
-    new Reloader(
+    meterElement.hidden = false;
+    new Meter(meterElement, canvasElement).start();
+    reloadOnChange(
       document.body.getAttribute(VERSION_ATTRIBUTE) ?? "",
       () => location.reload(),
-    ).start();
+    );
   }
-  new Application(canvas as HTMLCanvasElement, backend).start();
-}
+  new Canvas(canvasElement).start((frame) => backend.render(frame));
+};
 
-main().catch((error) => errorAlert.show(error));
+main().catch((error) => showAlert(message, error));

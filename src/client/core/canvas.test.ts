@@ -4,7 +4,7 @@
  * @module
  */
 import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
-import type { CanvasDelegate } from "../../types.ts";
+import type { FrameHandler, FrameInfo } from "../../types.ts";
 import {
   createFakeSurface,
   installFakeAnimationFrames,
@@ -12,16 +12,14 @@ import {
 } from "../../testing/fakes.ts";
 import { Canvas } from "./canvas.ts";
 
-/** The action that the delegate runs at each frame. */
+/** The action that the handler runs at each frame. */
 let onFrame: () => void = () => {};
 
-/** Make a delegate that records the time of each frame request. */
-function createDelegate(times: number[]): CanvasDelegate {
-  return {
-    canvasDidRequestFrame: (time) => {
-      times.push(time);
-      onFrame();
-    },
+/** Make a handler that records the frames that it gets. */
+function createHandler(received: FrameInfo[]): FrameHandler {
+  return (frame) => {
+    received.push(frame);
+    onFrame();
   };
 }
 
@@ -61,12 +59,14 @@ Deno.test("Canvas", async (t) => {
     });
   });
 
-  const times: number[] = [];
-  const delegate = createDelegate(times);
+  const received: FrameInfo[] = [];
+  const handler = createHandler(received);
+  /** The times of the frames that the handler got. */
+  const times = (): number[] => received.map((frame) => frame.time);
 
   // The size tests run with the frame loop, because the surface gets a new size
   // at the start of a frame.
-  canvas.start(delegate);
+  canvas.start(handler);
   let time = 0;
   /** Run one frame, and give the time of the frame. */
   const nextFrame = (): number => {
@@ -87,7 +87,7 @@ Deno.test("Canvas", async (t) => {
     assertEquals(fake.surface.height, 1200);
   });
 
-  await t.step("the surface has the new size when the delegate draws", () => {
+  await t.step("the surface has the new size when the handler draws", () => {
     const sizes: string[] = [];
     onFrame = () => sizes.push(`${fake.surface.width}x${fake.surface.height}`);
     observers.resize(fake.surface, 802, 600);
@@ -143,60 +143,69 @@ Deno.test("Canvas", async (t) => {
   });
 
   canvas.stop();
-  times.length = 0;
+  received.length = 0;
 
   await t.step("start asks for a frame and draws none at once", () => {
-    canvas.start(delegate);
+    canvas.start(handler);
     assertEquals(frames.pending, 1);
-    assertEquals(times.length, 0);
+    assertEquals(received.length, 0);
     canvas.stop();
   });
 
-  await t.step("a screen refresh gives the frame time to the delegate", () => {
-    canvas.start(delegate);
+  await t.step("a screen refresh gives the time and the aspect ratio", () => {
+    canvas.start(handler);
     frames.step(1234);
-    assertEquals(times, [1234]);
+    assertEquals(received, [{ time: 1234, aspectRatio: 3 }]);
+    canvas.stop();
+  });
+
+  await t.step("the aspect ratio follows the size of the canvas", () => {
+    received.length = 0;
+    canvas.start(handler);
+    observers.resize(fake.surface, 600, 300);
+    frames.step(10);
+    assertEquals(received.at(-1)?.aspectRatio, 2);
     canvas.stop();
   });
 
   await t.step("the loop asks for the next frame after each frame", () => {
-    times.length = 0;
-    canvas.start(delegate);
+    received.length = 0;
+    canvas.start(handler);
     frames.step(10);
     assertEquals(frames.pending, 1);
     frames.step(20);
     frames.step(30);
-    assertEquals(times, [10, 20, 30]);
+    assertEquals(times(), [10, 20, 30]);
     canvas.stop();
   });
 
   await t.step("start does nothing while the loop runs", () => {
-    times.length = 0;
-    canvas.start(delegate);
-    canvas.start(delegate);
+    received.length = 0;
+    canvas.start(handler);
+    canvas.start(handler);
     assertEquals(frames.pending, 1);
     frames.step(10);
-    assertEquals(times, [10]);
+    assertEquals(times(), [10]);
     canvas.stop();
   });
 
   await t.step("stop cancels the waiting frame", () => {
-    times.length = 0;
-    canvas.start(delegate);
+    received.length = 0;
+    canvas.start(handler);
     canvas.stop();
     assertEquals(frames.pending, 0);
     frames.step(10);
-    assertEquals(times.length, 0);
+    assertEquals(received.length, 0);
   });
 
   await t.step("stop inside a frame ends the loop", () => {
-    times.length = 0;
+    received.length = 0;
     onFrame = () => canvas.stop();
-    canvas.start(delegate);
+    canvas.start(handler);
     frames.step(10);
     onFrame = () => {};
     assertEquals(frames.pending, 0);
-    assertEquals(times, [10]);
+    assertEquals(times(), [10]);
   });
 
   await t.step("stop does nothing when the loop is idle", () => {
@@ -206,13 +215,13 @@ Deno.test("Canvas", async (t) => {
   });
 
   await t.step("the loop can start again after stop", () => {
-    times.length = 0;
-    canvas.start(delegate);
+    received.length = 0;
+    canvas.start(handler);
     canvas.stop();
-    canvas.start(delegate);
+    canvas.start(handler);
     assertEquals(frames.pending, 1);
     frames.step(10);
-    assertEquals(times, [10]);
+    assertEquals(times(), [10]);
     canvas.stop();
   });
 

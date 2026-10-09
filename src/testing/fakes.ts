@@ -39,8 +39,16 @@ export interface FakeDevice {
   readonly bufferDescriptors: GPUBufferDescriptor[];
   /** The arguments of each `createBindGroup` call. */
   readonly bindGroupDescriptors: GPUBindGroupDescriptor[];
-  /** The arguments of each `beginRenderPass` call. */
+  /**
+   * The values of the arguments of each `beginRenderPass` call, as they were
+   * at the time of the call.
+   */
   readonly passDescriptors: GPURenderPassDescriptor[];
+  /**
+   * The argument objects of each `beginRenderPass` call. Code that reuses an
+   * object gives the same object more than one time.
+   */
+  readonly passDescriptorObjects: GPURenderPassDescriptor[];
   /** Each `writeBuffer` call. */
   readonly writes: BufferWrite[];
   /** The command buffers of each `submit` call. */
@@ -84,6 +92,7 @@ export function createFakeDevice(): FakeDevice {
   const bufferDescriptors: GPUBufferDescriptor[] = [];
   const bindGroupDescriptors: GPUBindGroupDescriptor[] = [];
   const passDescriptors: GPURenderPassDescriptor[] = [];
+  const passDescriptorObjects: GPURenderPassDescriptor[] = [];
   const writes: BufferWrite[] = [];
   const submissions: GPUCommandBuffer[][] = [];
 
@@ -121,7 +130,13 @@ export function createFakeDevice(): FakeDevice {
       events.push("createCommandEncoder");
       return fake<GPUCommandEncoder>({
         beginRenderPass: (descriptor: GPURenderPassDescriptor) => {
-          passDescriptors.push(descriptor);
+          passDescriptorObjects.push(descriptor);
+          passDescriptors.push({
+            ...descriptor,
+            colorAttachments: [...descriptor.colorAttachments].flatMap((
+              attachment,
+            ) => attachment ? [{ ...attachment }] : []),
+          });
           events.push("beginRenderPass");
           return pass;
         },
@@ -155,6 +170,7 @@ export function createFakeDevice(): FakeDevice {
     bufferDescriptors,
     bindGroupDescriptors,
     passDescriptors,
+    passDescriptorObjects,
     writes,
     submissions,
     pass,

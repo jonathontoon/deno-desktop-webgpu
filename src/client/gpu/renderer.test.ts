@@ -62,6 +62,38 @@ Deno.test("Renderer", async (t) => {
     assertEquals(fakeDevice.submissions, [[fakeDevice.commandBuffer]]);
   });
 
+  await t.step("render reuses the render pass objects in each frame", () => {
+    fakeDevice.passDescriptorObjects.length = 0;
+    renderer.render({ draw: () => {} }, FRAME);
+    renderer.render({ draw: () => {} }, FRAME);
+    const [first, second] = fakeDevice.passDescriptorObjects;
+    assertStrictEquals(first, second);
+    assertStrictEquals(
+      [...first.colorAttachments][0],
+      [...second.colorAttachments][0],
+    );
+  });
+
+  await t.step("each frame draws to the view of its own frame", () => {
+    const views = [fake<GPUTextureView>({}), fake<GPUTextureView>({})];
+    let next = 0;
+    const changing = new Renderer(
+      fake<Graphics>({
+        device: fakeDevice.device,
+        currentView: () => views[next++],
+      }),
+      CLEAR_COLOR,
+    );
+    fakeDevice.passDescriptors.length = 0;
+    changing.render({ draw: () => {} }, FRAME);
+    changing.render({ draw: () => {} }, FRAME);
+    const drawn = fakeDevice.passDescriptors.map((descriptor) =>
+      [...descriptor.colorAttachments][0]?.view
+    );
+    assertStrictEquals(drawn[0], views[0]);
+    assertStrictEquals(drawn[1], views[1]);
+  });
+
   await t.step("two renderers can share one graphics object", () => {
     const other = { r: 1, g: 0, b: 0, a: 1 };
     new Renderer(graphics, other).render({ draw: () => {} }, FRAME);

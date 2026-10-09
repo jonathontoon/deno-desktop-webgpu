@@ -33,6 +33,9 @@ export class Canvas {
   /** `true` while the frame loop runs. */
   private running = false;
 
+  /** The data about the frame. Each frame writes new values into it. */
+  private readonly frame = { time: 0, aspectRatio: 1 };
+
   /** The id of the next frame request. It is `undefined` when none waits. */
   private frameRequest: number | undefined;
 
@@ -146,7 +149,9 @@ export class Canvas {
   private tick(time: number): void {
     this.frameRequest = undefined;
     this.applyPendingSize();
-    this.handler?.({ time, aspectRatio: this.aspectRatio });
+    this.frame.time = time;
+    this.frame.aspectRatio = this.aspectRatio;
+    this.handler?.(this.frame);
     if (this.running) {
       this.requestFrame();
     }

@@ -18,7 +18,7 @@ let onFrame: () => void = () => {};
 /** Make a handler that records the frames that it gets. */
 function createHandler(received: FrameInfo[]): FrameHandler {
   return (frame) => {
-    received.push(frame);
+    received.push({ ...frame });
     onFrame();
   };
 }
@@ -144,6 +144,17 @@ Deno.test("Canvas", async (t) => {
     canvas.start(handler);
     frames.step(1234);
     assertEquals(received, [{ time: 1234, aspectRatio: 3 }]);
+    canvas.stop();
+  });
+
+  await t.step("each frame gives the same frame object", () => {
+    const objects: FrameInfo[] = [];
+    canvas.start((frame) => void objects.push(frame));
+    frames.step(10);
+    frames.step(20);
+    assertEquals(objects.length, 2);
+    assertStrictEquals(objects[0], objects[1]);
+    assertEquals(objects[1], { time: 20, aspectRatio: 3 });
     canvas.stop();
   });
 

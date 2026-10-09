@@ -15,6 +15,20 @@ import type { Graphics } from "./graphics.ts";
  */
 export class Renderer {
   /**
+   * The color attachments of the render pass. The array is empty until the
+   * first frame. After that, it has one attachment that each frame reuses.
+   */
+  private readonly colorAttachments: GPURenderPassColorAttachment[] = [];
+
+  /** The render pass descriptor. Each frame reuses it. */
+  private readonly passDescriptor: GPURenderPassDescriptor = {
+    colorAttachments: this.colorAttachments,
+  };
+
+  /** The list for `submit`. Each frame reuses it. */
+  private readonly commandBuffers: GPUCommandBuffer[] = [];
+
+  /**
    * Make the renderer.
    *
    * @param graphics - The `Graphics` object. It gives the device and the texture.
@@ -41,16 +55,32 @@ export class Renderer {
   public render(drawable: Drawable, frame: FrameInfo): void {
     const { device } = this.graphics;
     const encoder = device.createCommandEncoder();
-    const pass = encoder.beginRenderPass({
-      colorAttachments: [{
-        view: this.graphics.currentView(),
-        clearValue: this.clearColor,
-        loadOp: "clear",
-        storeOp: "store",
-      }],
-    });
+    this.setView(this.graphics.currentView());
+    const pass = encoder.beginRenderPass(this.passDescriptor);
     drawable.draw(pass, frame);
     pass.end();
-    device.queue.submit([encoder.finish()]);
+    this.commandBuffers[0] = encoder.finish();
+    device.queue.submit(this.commandBuffers);
+  }
+
+  /**
+   * Give the texture view of this frame to the render pass. The first call
+   * makes the color attachment. Each later call changes only its view, so no
+   * new object is made.
+   *
+   * @param view - The texture view that the frame draws to.
+   */
+  private setView(view: GPUTextureView): void {
+    const [attachment] = this.colorAttachments;
+    if (attachment) {
+      attachment.view = view;
+      return;
+    }
+    this.colorAttachments.push({
+      view,
+      clearValue: this.clearColor,
+      loadOp: "clear",
+      storeOp: "store",
+    });
   }
 }

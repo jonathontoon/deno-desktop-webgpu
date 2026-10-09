@@ -80,6 +80,10 @@ export interface Backend {
  * A function that the canvas calls before each screen refresh. It draws one
  * frame.
  *
+ * @remarks
+ * The canvas gives the same `frame` object in each call, and it writes new
+ * values into it. Copy the values if you need them after the call.
+ *
  * @param frame - The data about the frame that is in progress.
  */
 export type FrameHandler = (frame: FrameInfo) => void;

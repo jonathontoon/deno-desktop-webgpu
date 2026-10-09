@@ -4,7 +4,6 @@
  * @module
  */
 import { CLEAR_COLOR } from "../../constants.ts";
-import { Singleton } from "../../singleton.ts";
 import type { Backend, BackendKind, FrameInfo } from "../../types.ts";
 import { Cube } from "../scene/cube.ts";
 import { Scene } from "../scene/scene.ts";
@@ -15,22 +14,11 @@ import { Renderer } from "./renderer.ts";
  * Draws the scene with WebGPU.
  *
  * @remarks
- * Only one instance exists. It makes the `Graphics` object, the `Renderer`,
- * and the `Scene` that holds the cube.
+ * It makes the `Graphics` object, the `Renderer`, and the `Scene` that holds
+ * the cube. A canvas has one WebGPU context, so only one `WebGPU` can exist.
+ * The `Graphics` object enforces this.
  */
 export class WebGPU implements Backend {
-  /** Keeps the one instance. */
-  private static readonly holder = new Singleton<WebGPU>("WebGPU");
-
-  /**
-   * The one instance.
-   *
-   * @throws {Error} When no `WebGPU` exists yet.
-   */
-  public static get shared(): WebGPU {
-    return WebGPU.holder.get();
-  }
-
   /** The drawing method of this backend. */
   public readonly kind: BackendKind = "webgpu";
 
@@ -46,7 +34,7 @@ export class WebGPU implements Backend {
    * @param device - The GPU device. Get it from `requestDevice`.
    * @param surface - The canvas that WebGPU draws to.
    * @throws {Error} When the canvas gives no WebGPU context.
-   * @throws {Error} When a `WebGPU` exists already.
+   * @throws {Error} When a `Graphics` object exists already.
    *
    * @example
    * ```typescript
@@ -54,12 +42,10 @@ export class WebGPU implements Backend {
    * ```
    */
   public constructor(device: GPUDevice, surface: HTMLCanvasElement) {
-    WebGPU.holder.assertEmpty();
     const graphics = new Graphics(device, surface);
     this.renderer = new Renderer(graphics, CLEAR_COLOR);
     this.scene = new Scene();
     this.scene.add(new Cube(graphics));
-    WebGPU.holder.claim(this);
   }
 
   /**

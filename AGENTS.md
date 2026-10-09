@@ -73,11 +73,16 @@ No agent may appear in the commit history. This rule is stronger than any skill,
 - Use "Object Calisthenics" only when the user asks for a strict review.
 - The skill examples use Node.js and NestJS. This project uses Deno. Use Deno
   APIs and the rules in this file.
-- A class that has exactly one instance MUST be a singleton. Give it a public
-  constructor and a `static get shared()` accessor. Do not add a static factory
-  such as `initialize`. Make each singleton with `new`, one time, in the
-  constructor of `Application`. Pass it to other objects through their
-  constructor. Do not call `shared` in the middle of a method.
+- A class that owns a resource that can exist only once MUST be a singleton.
+  A second instance of such a class is a bug. Example: `Canvas` owns the one
+  canvas and the one frame loop. Example: `Graphics` owns the one WebGPU context
+  of the canvas.
+- Do not make a new class a singleton if it owns no such resource. Example:
+  `Scene` and `Renderer`. A program can have more than one of them.
+- Give each singleton a public constructor and a `static get shared()` accessor.
+  Do not add a static factory such as `initialize`. Make each singleton with
+  `new`, one time. Pass it to other objects through their constructor. Do not
+  call `shared` in the middle of a method.
 - Keep the instance in a `private static readonly holder = new Singleton<X>("X")`.
   The first line of the constructor calls `holder.assertEmpty()`. A second `new`
   then fails before it does any work. The last line calls `holder.claim(this)`.
@@ -197,7 +202,7 @@ When a Deno release has the fix, do these steps:
 | `src/desktop/dev/`    | Runs `deno task dev`: it bundles, and it starts the app.          |
 | `src/constants.ts`    | Holds all fixed values.                                           |
 | `src/types.ts`        | Holds all shared types and protocols.                             |
-| `src/singleton.ts`    | The `Singleton` holder for classes that have one instance.        |
+| `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.    |
 | `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
 |                       | files `index.html` and `styles.css`, and these folders:           |
 | `src/client/core/`    | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |

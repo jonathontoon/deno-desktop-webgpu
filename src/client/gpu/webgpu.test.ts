@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import {
   createFakeDevice,
   createFakeSurface,
@@ -12,10 +12,6 @@ import {
 import { WebGPU } from "./webgpu.ts";
 
 Deno.test("WebGPU", async (t) => {
-  await t.step("shared fails before a WebGPU exists", () => {
-    assertThrows(() => WebGPU.shared, Error, "WebGPU is not initialized.");
-  });
-
   const fakeDevice = createFakeDevice();
   const fakeSurface = createFakeSurface();
   const restore = installFakeNavigatorGPU({ device: fakeDevice.device });
@@ -24,10 +20,6 @@ Deno.test("WebGPU", async (t) => {
 
     await t.step("the kind is webgpu", () => {
       assertEquals(backend.kind, "webgpu");
-    });
-
-    await t.step("shared gives the instance", () => {
-      assertStrictEquals(WebGPU.shared, backend);
     });
 
     await t.step("the constructor draws nothing", () => {
@@ -48,11 +40,11 @@ Deno.test("WebGPU", async (t) => {
       assertEquals(fakeDevice.writes.at(-1)?.data, [2, 3]);
     });
 
-    await t.step("a second WebGPU fails", () => {
+    await t.step("a second WebGPU fails, because Graphics exists", () => {
       assertThrows(
         () => new WebGPU(fakeDevice.device, createFakeSurface().surface),
         Error,
-        "WebGPU exists already.",
+        "Graphics exists already.",
       );
     });
   } finally {

@@ -46,7 +46,7 @@ You need a computer with a GPU that supports WebGPU.
 | `src/desktop/dev/`    | Runs `deno task dev`: it bundles, and it starts the app.          |
 | `src/constants.ts`    | Holds all fixed values.                                           |
 | `src/types.ts`        | Holds all shared types and protocols.                             |
-| `src/singleton.ts`    | The `Singleton` holder for classes that have one instance.        |
+| `src/singleton.ts`    | The `Singleton` holder for classes that own a unique resource.    |
 | `src/client/`         | Runs in the page. It has the entry point `main.ts`, the page      |
 |                       | files `index.html` and `styles.css`, and these folders:           |
 | `src/client/core/`    | `Application`, `Canvas`, `Alert`, `Meter`, `Reloader`, and        |

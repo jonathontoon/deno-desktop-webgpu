@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { assertEquals, assertStrictEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStrictEquals } from "@std/assert";
 import { createFakeDevice, fake } from "../../testing/fakes.ts";
 import type { Drawable, FrameInfo } from "../../types.ts";
 import type { Graphics } from "./graphics.ts";
@@ -13,10 +13,6 @@ const CLEAR_COLOR = { r: 0.1, g: 0.2, b: 0.3, a: 1 };
 const FRAME: FrameInfo = { time: 12, aspectRatio: 2 };
 
 Deno.test("Renderer", async (t) => {
-  await t.step("shared fails before a Renderer exists", () => {
-    assertThrows(() => Renderer.shared, Error, "Renderer is not initialized.");
-  });
-
   const fakeDevice = createFakeDevice();
   const view = fake<GPUTextureView>({});
   const graphics = fake<Graphics>({
@@ -24,18 +20,6 @@ Deno.test("Renderer", async (t) => {
     currentView: () => view,
   });
   const renderer = new Renderer(graphics, CLEAR_COLOR);
-
-  await t.step("shared gives the instance", () => {
-    assertStrictEquals(Renderer.shared, renderer);
-  });
-
-  await t.step("a second Renderer fails", () => {
-    assertThrows(
-      () => new Renderer(graphics, CLEAR_COLOR),
-      Error,
-      "Renderer exists already.",
-    );
-  });
 
   await t.step("render clears the window to the clear color", () => {
     const drawable: Drawable = { draw: () => {} };
@@ -76,5 +60,14 @@ Deno.test("Renderer", async (t) => {
       "submit",
     ]);
     assertEquals(fakeDevice.submissions, [[fakeDevice.commandBuffer]]);
+  });
+
+  await t.step("two renderers can share one graphics object", () => {
+    const other = { r: 1, g: 0, b: 0, a: 1 };
+    new Renderer(graphics, other).render({ draw: () => {} }, FRAME);
+
+    const descriptor = fakeDevice.passDescriptors.at(-1);
+    const [attachment] = [...(descriptor?.colorAttachments ?? [])];
+    assertEquals(attachment?.clearValue, other);
   });
 });

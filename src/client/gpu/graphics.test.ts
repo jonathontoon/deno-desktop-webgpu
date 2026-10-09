@@ -27,6 +27,20 @@ Deno.test("requestDevice", async (t) => {
     }
   });
 
+  await t.step("asks for the high-performance GPU", async () => {
+    const requests: (GPURequestAdapterOptions | undefined)[] = [];
+    const restore = installFakeNavigatorGPU({
+      device: createFakeDevice().device,
+      onRequestAdapter: (options) => void requests.push(options),
+    });
+    try {
+      await requestDevice();
+      assertEquals(requests, [{ powerPreference: "high-performance" }]);
+    } finally {
+      restore();
+    }
+  });
+
   await t.step("fails when WebGPU is not available", async () => {
     const original = Object.getOwnPropertyDescriptor(navigator, "gpu");
     Object.defineProperty(navigator, "gpu", {

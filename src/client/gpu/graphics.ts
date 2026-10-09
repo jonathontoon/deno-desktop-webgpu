@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { CANVAS_ALPHA_MODE } from "../../constants.ts";
+import { CANVAS_ALPHA_MODE, GPU_POWER_PREFERENCE } from "../../constants.ts";
 import { Singleton } from "../../singleton.ts";
 
 /**
@@ -95,7 +95,9 @@ export async function requestDevice(): Promise<GPUDevice> {
   if (!navigator.gpu) {
     throw new Error("WebGPU is not available.");
   }
-  const adapter = await navigator.gpu.requestAdapter();
+  const adapter = await navigator.gpu.requestAdapter({
+    powerPreference: GPU_POWER_PREFERENCE,
+  });
   if (!adapter) {
     throw new Error("No WebGPU adapter is available.");
   }

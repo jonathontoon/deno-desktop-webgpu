@@ -222,8 +222,11 @@ export interface FakeNavigatorGPUOptions {
   readonly hasAdapter?: boolean;
   /** The preferred pixel format. */
   readonly format?: GPUTextureFormat;
-  /** A function that runs each time the code asks for an adapter. */
-  readonly onRequestAdapter?: () => void;
+  /**
+   * A function that runs each time the code asks for an adapter. It gets the
+   * options of the request.
+   */
+  readonly onRequestAdapter?: (options?: GPURequestAdapterOptions) => void;
 }
 
 /**
@@ -245,8 +248,8 @@ export function installFakeNavigatorGPU(
   Object.defineProperty(navigator, "gpu", {
     configurable: true,
     value: {
-      requestAdapter: () => {
-        onRequestAdapter();
+      requestAdapter: (adapterOptions?: GPURequestAdapterOptions) => {
+        onRequestAdapter(adapterOptions);
         return Promise.resolve(
           hasAdapter ? { requestDevice: () => Promise.resolve(device) } : null,
         );

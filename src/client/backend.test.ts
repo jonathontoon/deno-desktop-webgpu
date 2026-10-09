@@ -3,7 +3,13 @@
  *
  * @module
  */
-import { assertEquals, assertInstanceOf, assertRejects } from "@std/assert";
+import {
+  assertAlmostEquals,
+  assertEquals,
+  assertInstanceOf,
+  assertRejects,
+} from "@std/assert";
+import { CUBE_FOCAL_LENGTH, CUBE_UNIFORM_FLOAT_COUNT } from "./constants.ts";
 import {
   createFakeDevice,
   createFakeSurface,
@@ -46,7 +52,10 @@ Deno.test("selectBackend", async (t) => {
       );
 
       backend.render({ time: 2000, aspectRatio: 3 });
-      assertEquals(fakeDevice.writes.at(-1)?.data, [2, 3]);
+      const matrix = fakeDevice.writes.at(-1)?.data ?? [];
+      assertEquals(matrix.length, CUBE_UNIFORM_FLOAT_COUNT);
+      // The first number is cos(angle) * focal length / aspect ratio.
+      assertAlmostEquals(matrix[0], Math.cos(2) * CUBE_FOCAL_LENGTH / 3, 1e-6);
     } finally {
       restore();
     }

@@ -58,19 +58,23 @@ export const TRIANGLE_OFFSET_X: number = -0.5;
 /** The number of corner points (vertices) of a cube: 6 faces, 2 triangles each, 3 vertices each. */
 export const CUBE_VERTEX_COUNT = 36;
 
-/** The number of numbers that the cube shader reads: the rotation angle and the aspect ratio of the window. */
-export const CUBE_UNIFORM_FLOAT_COUNT = 2;
+/** The number of numbers that the cube shader reads: the 16 numbers of one 4 by 4 matrix. */
+export const CUBE_UNIFORM_FLOAT_COUNT = 16;
 
-/** How fast the cube tips forward, compared with how fast it turns. The shader file has the same value. */
+/** How fast the cube tips forward, compared with how fast it turns. */
 export const CUBE_TILT_RATIO = 0.6;
 
-/**
- * The angle after which the turn and the tip of the cube repeat, in radians.
- * The cube turns one time at 2π and tips 3 times at 10π. So both repeat at 10π.
- * The cube gets the angle modulo this value. A large angle then does not lose
- * precision in the `f32` number of the shader.
- */
-export const CUBE_ANGLE_PERIOD = 10 * Math.PI;
+/** The distance from the camera to the center of the cube. */
+export const CUBE_CAMERA_DISTANCE = 2;
+
+/** The near plane of the view. The GPU draws only what is between the near plane and the far plane. */
+export const CUBE_NEAR_PLANE = 0.1;
+
+/** The far plane of the view. */
+export const CUBE_FAR_PLANE = 10;
+
+/** 1 divided by tan(30 degrees). The field of view is 60 degrees. */
+export const CUBE_FOCAL_LENGTH = 1 / Math.tan(Math.PI / 6);
 
 /** The angle after which the turn of the triangle repeats, in radians. */
 export const TRIANGLE_ANGLE_PERIOD = 2 * Math.PI;

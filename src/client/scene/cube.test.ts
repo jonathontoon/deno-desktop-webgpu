@@ -9,7 +9,10 @@ import {
   assertStringIncludes,
 } from "@std/assert";
 import {
-  CUBE_ANGLE_PERIOD,
+  CUBE_CAMERA_DISTANCE,
+  CUBE_FAR_PLANE,
+  CUBE_FOCAL_LENGTH,
+  CUBE_NEAR_PLANE,
   CUBE_TILT_RATIO,
   CUBE_UNIFORM_FLOAT_COUNT,
   CUBE_VERTEX_COUNT,
@@ -40,8 +43,7 @@ Deno.test("the shader file has the entry points that the constants name", () => 
 });
 
 Deno.test("the shader file has the uniform fields that the class writes", () => {
-  assertStringIncludes(CUBE_SHADER, "angle: f32");
-  assertStringIncludes(CUBE_SHADER, "aspectRatio: f32");
+  assertStringIncludes(CUBE_SHADER, "transform: mat4x4f");
 });
 
 /** Read the 36 corner numbers of the faces from the shader file. */
@@ -125,37 +127,98 @@ Deno.test("the cube draws 36 vertices", () => {
   assertEquals(gpu.events.at(-1), "draw:36");
 });
 
-Deno.test("the uniform values are the angle and the aspect ratio", () => {
+/** Read the half edge of the cube from the shader file. */
+function readHalfEdge(): number {
+  return Number(CUBE_SHADER.match(/const HALF_EDGE = ([\d.]+);/)?.[1]);
+}
+
+/** Give the position of each of the 8 corners of the cube, as the shader does. */
+function cornerPositions(): [number, number, number][] {
+  const edge = 2 * readHalfEdge();
+  return [0, 1, 2, 3, 4, 5, 6, 7].map((corner) => [
+    ((corner & 1) - 0.5) * edge,
+    (((corner >> 1) & 1) - 0.5) * edge,
+    (((corner >> 2) & 1) - 0.5) * edge,
+  ]);
+}
+
+/**
+ * Compute the place of a corner in the window, step by step. This is the
+ * answer that the matrix must give.
+ */
+function expectedPosition(
+  [x, y, z]: [number, number, number],
+  time: number,
+  aspectRatio: number,
+): number[] {
+  const angle = time / MS_PER_SECOND;
+  const turned = [
+    x * Math.cos(angle) + z * Math.sin(angle),
+    y,
+    -x * Math.sin(angle) + z * Math.cos(angle),
+  ];
+  const tip = angle * CUBE_TILT_RATIO;
+  const tipped = [
+    turned[0],
+    turned[1] * Math.cos(tip) - turned[2] * Math.sin(tip),
+    turned[1] * Math.sin(tip) + turned[2] * Math.cos(tip),
+  ];
+  const depth = tipped[2] + CUBE_CAMERA_DISTANCE;
+  const range = CUBE_FAR_PLANE - CUBE_NEAR_PLANE;
+  return [
+    tipped[0] * CUBE_FOCAL_LENGTH / aspectRatio,
+    tipped[1] * CUBE_FOCAL_LENGTH,
+    depth * CUBE_FAR_PLANE / range - CUBE_FAR_PLANE * CUBE_NEAR_PLANE / range,
+    depth,
+  ];
+}
+
+/** Multiply a corner by a 4 by 4 matrix that is in column order. */
+function transform(
+  matrix: readonly number[],
+  [x, y, z]: [number, number, number],
+): number[] {
+  const corner = [x, y, z, 1];
+  return [0, 1, 2, 3].map((row) =>
+    corner.reduce(
+      (sum, value, column) => sum + matrix[column * 4 + row] * value,
+      0,
+    )
+  );
+}
+
+Deno.test("the uniform values are one matrix of 16 numbers", () => {
   const { gpu, cube } = makeCube();
   cube.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
-  assertEquals(gpu.writes[0].data, [2, 1.5]);
+  assertEquals(gpu.writes[0].data.length, CUBE_UNIFORM_FLOAT_COUNT);
 });
 
-Deno.test("the shader file has the tilt ratio of the constants", () => {
-  const ratio = CUBE_SHADER.match(/const TILT_RATIO = ([\d.]+);/)?.[1];
-  assertEquals(Number(ratio), CUBE_TILT_RATIO);
+Deno.test("the matrix puts each corner where the step by step math puts it", () => {
+  const times = [0, 1234, 7000, 3600 * MS_PER_SECOND * 30 + 1500];
+  const aspectRatios = [1, 0.75, 1.5];
+  for (const time of times) {
+    for (const aspectRatio of aspectRatios) {
+      const { gpu, cube } = makeCube();
+      cube.draw(gpu.pass, { time, aspectRatio });
+      const matrix = gpu.writes[0].data;
+      for (const corner of cornerPositions()) {
+        const actual = transform(matrix, corner);
+        const expected = expectedPosition(corner, time, aspectRatio);
+        actual.forEach((value, index) =>
+          assertAlmostEquals(value, expected[index], 1e-5)
+        );
+      }
+    }
+  }
 });
 
-Deno.test("the turn and the tip both repeat after the angle period", () => {
-  const turns = CUBE_ANGLE_PERIOD / (2 * Math.PI);
-  const tips = CUBE_ANGLE_PERIOD * CUBE_TILT_RATIO / (2 * Math.PI);
-  assertAlmostEquals(turns, Math.round(turns), 1e-9);
-  assertAlmostEquals(tips, Math.round(tips), 1e-9);
-});
-
-Deno.test("the angle stays below the angle period after a long time", () => {
+Deno.test("the cube is in front of the camera", () => {
   const { gpu, cube } = makeCube();
-  const seconds = 100 * 3600 + 1;
-  cube.draw(gpu.pass, { time: seconds * MS_PER_SECOND, aspectRatio: 1 });
-  const angle = gpu.writes[0].data[0];
-  assertEquals(angle >= 0 && angle < CUBE_ANGLE_PERIOD, true);
-  assertAlmostEquals(angle, seconds % CUBE_ANGLE_PERIOD, 1e-4);
-});
-
-Deno.test("the angle is the same one period later", () => {
-  const { gpu, cube } = makeCube();
-  const period = CUBE_ANGLE_PERIOD * MS_PER_SECOND;
-  cube.draw(gpu.pass, { time: 3000, aspectRatio: 1 });
-  cube.draw(gpu.pass, { time: 3000 + period, aspectRatio: 1 });
-  assertAlmostEquals(gpu.writes[1].data[0], gpu.writes[0].data[0], 1e-6);
+  for (const time of [0, 1234, 7000]) {
+    cube.draw(gpu.pass, { time, aspectRatio: 1 });
+    const matrix = gpu.writes.at(-1)?.data ?? [];
+    for (const corner of cornerPositions()) {
+      assertEquals(transform(matrix, corner)[3] > 0, true);
+    }
+  }
 });

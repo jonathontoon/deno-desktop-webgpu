@@ -145,5 +145,16 @@ export const CUBE_VERTEX_COUNT = 36;
 /** The number of numbers that the cube shader reads: the rotation angle and the aspect ratio of the window. */
 export const CUBE_UNIFORM_FLOAT_COUNT = 2;
 
-/** How fast the cube tips forward, compared with how fast it turns. */
+/** How fast the cube tips forward, compared with how fast it turns. The shader file has the same value. */
 export const CUBE_TILT_RATIO = 0.6;
+
+/**
+ * The angle after which the turn and the tip of the cube repeat, in radians.
+ * The cube turns one time at 2π and tips 3 times at 10π. So both repeat at 10π.
+ * The cube gets the angle modulo this value. A large angle then does not lose
+ * precision in the `f32` number of the shader.
+ */
+export const CUBE_ANGLE_PERIOD = 10 * Math.PI;
+
+/** The angle after which the turn of the triangle repeats, in radians. */
+export const TRIANGLE_ANGLE_PERIOD = 2 * Math.PI;

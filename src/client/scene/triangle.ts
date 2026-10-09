@@ -5,6 +5,7 @@
  */
 import {
   MS_PER_SECOND,
+  TRIANGLE_ANGLE_PERIOD,
   TRIANGLE_OFFSET_X,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   TRIANGLE_VERTEX_COUNT,
@@ -47,14 +48,15 @@ export class Triangle extends Pipeline {
    * Put the rotation angle, the aspect ratio, and the offset into the uniform
    * values.
    *
-   * @param frame - The data about the frame. `time` sets the angle.
+   * @param frame - The data about the frame. `time` sets the angle. The angle
+   * repeats after `TRIANGLE_ANGLE_PERIOD`, so it stays small.
    * @param uniforms - The numbers that go to the shader.
    */
   protected override writeUniforms(
     frame: FrameInfo,
     uniforms: Float32Array,
   ): void {
-    uniforms[0] = frame.time / MS_PER_SECOND;
+    uniforms[0] = (frame.time / MS_PER_SECOND) % TRIANGLE_ANGLE_PERIOD;
     uniforms[1] = frame.aspectRatio;
     uniforms[2] = TRIANGLE_OFFSET_X;
   }

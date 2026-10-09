@@ -4,6 +4,7 @@
  * @module
  */
 import {
+  CUBE_ANGLE_PERIOD,
   CUBE_UNIFORM_FLOAT_COUNT,
   CUBE_VERTEX_COUNT,
   MS_PER_SECOND,
@@ -48,14 +49,15 @@ export class Cube extends Pipeline {
   /**
    * Put the rotation angle and the aspect ratio into the uniform values.
    *
-   * @param frame - The data about the frame. `time` sets the angle.
+   * @param frame - The data about the frame. `time` sets the angle. The angle
+   * repeats after `CUBE_ANGLE_PERIOD`, so it stays small.
    * @param uniforms - The numbers that go to the shader.
    */
   protected override writeUniforms(
     frame: FrameInfo,
     uniforms: Float32Array,
   ): void {
-    uniforms[0] = frame.time / MS_PER_SECOND;
+    uniforms[0] = (frame.time / MS_PER_SECOND) % CUBE_ANGLE_PERIOD;
     uniforms[1] = frame.aspectRatio;
   }
 }

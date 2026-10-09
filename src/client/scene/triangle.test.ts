@@ -3,9 +3,15 @@
  *
  * @module
  */
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import {
+  assertAlmostEquals,
+  assertEquals,
+  assertStringIncludes,
+} from "@std/assert";
 import {
   FRAGMENT_ENTRY_POINT,
+  MS_PER_SECOND,
+  TRIANGLE_ANGLE_PERIOD,
   TRIANGLE_OFFSET_X,
   TRIANGLE_UNIFORM_FLOAT_COUNT,
   VERTEX_ENTRY_POINT,
@@ -77,4 +83,13 @@ Deno.test("the offset goes to the third uniform value", () => {
   const { gpu, triangle } = createTriangle();
   triangle.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
   assertEquals(gpu.writes[0].data[2], TRIANGLE_OFFSET_X);
+});
+
+Deno.test("the angle stays below the angle period after a long time", () => {
+  const { gpu, triangle } = createTriangle();
+  const seconds = 100 * 3600 + 1;
+  triangle.draw(gpu.pass, { time: seconds * MS_PER_SECOND, aspectRatio: 1 });
+  const angle = gpu.writes[0].data[0];
+  assertEquals(angle >= 0 && angle < TRIANGLE_ANGLE_PERIOD, true);
+  assertAlmostEquals(angle, seconds % TRIANGLE_ANGLE_PERIOD, 1e-4);
 });

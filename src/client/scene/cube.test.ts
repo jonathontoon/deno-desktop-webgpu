@@ -3,11 +3,18 @@
  *
  * @module
  */
-import { assertEquals, assertStringIncludes } from "@std/assert";
 import {
+  assertAlmostEquals,
+  assertEquals,
+  assertStringIncludes,
+} from "@std/assert";
+import {
+  CUBE_ANGLE_PERIOD,
+  CUBE_TILT_RATIO,
   CUBE_UNIFORM_FLOAT_COUNT,
   CUBE_VERTEX_COUNT,
   FRAGMENT_ENTRY_POINT,
+  MS_PER_SECOND,
   VERTEX_ENTRY_POINT,
 } from "../../constants.ts";
 import type { Graphics } from "../gpu/graphics.ts";
@@ -122,4 +129,33 @@ Deno.test("the uniform values are the angle and the aspect ratio", () => {
   const { gpu, cube } = createCube();
   cube.draw(gpu.pass, { time: 2000, aspectRatio: 1.5 });
   assertEquals(gpu.writes[0].data, [2, 1.5]);
+});
+
+Deno.test("the shader file has the tilt ratio of the constants", () => {
+  const ratio = CUBE_SHADER.match(/const TILT_RATIO = ([\d.]+);/)?.[1];
+  assertEquals(Number(ratio), CUBE_TILT_RATIO);
+});
+
+Deno.test("the turn and the tip both repeat after the angle period", () => {
+  const turns = CUBE_ANGLE_PERIOD / (2 * Math.PI);
+  const tips = CUBE_ANGLE_PERIOD * CUBE_TILT_RATIO / (2 * Math.PI);
+  assertAlmostEquals(turns, Math.round(turns), 1e-9);
+  assertAlmostEquals(tips, Math.round(tips), 1e-9);
+});
+
+Deno.test("the angle stays below the angle period after a long time", () => {
+  const { gpu, cube } = createCube();
+  const seconds = 100 * 3600 + 1;
+  cube.draw(gpu.pass, { time: seconds * MS_PER_SECOND, aspectRatio: 1 });
+  const angle = gpu.writes[0].data[0];
+  assertEquals(angle >= 0 && angle < CUBE_ANGLE_PERIOD, true);
+  assertAlmostEquals(angle, seconds % CUBE_ANGLE_PERIOD, 1e-4);
+});
+
+Deno.test("the angle is the same one period later", () => {
+  const { gpu, cube } = createCube();
+  const period = CUBE_ANGLE_PERIOD * MS_PER_SECOND;
+  cube.draw(gpu.pass, { time: 3000, aspectRatio: 1 });
+  cube.draw(gpu.pass, { time: 3000 + period, aspectRatio: 1 });
+  assertAlmostEquals(gpu.writes[1].data[0], gpu.writes[0].data[0], 1e-6);
 });

@@ -29,7 +29,7 @@ export class Scene implements Drawable {
    *
    * @example
    * ```typescript
-   * scene.add(createTriangle(graphics));
+   * scene.add(createCube(graphics));
    * ```
    */
   public add(drawable: Drawable): void {

@@ -215,7 +215,7 @@ When a Deno release has the fix, do these steps:
 | `src/client/types.ts`      | The types and protocols of the page.                              |
 | `src/client/singleton.ts`  | The `Singleton` holder for classes that own a unique resource.    |
 | `src/client/gpu/`          | The WebGPU backend: `WebGPU`, `Graphics`, `Renderer`, `Pipeline`. |
-| `src/client/scene/`        | `Scene`, `createCube`, `createTriangle`, and the shaders.         |
+| `src/client/scene/`        | `Scene`, `createCube`, and the cube shader.                       |
 | `src/testing/`             | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`         | The unit tests. Each one is next to the file that it tests.       |
 | `deno.json`                | Deno settings, tasks, and the `cef` backend.                      |

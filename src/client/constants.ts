@@ -26,12 +26,6 @@ export const VERTEX_ENTRY_POINT = "vertexMain";
 /** The name of the fragment function in each shader file. */
 export const FRAGMENT_ENTRY_POINT = "fragmentMain";
 
-/** The number of corner points (vertices) of a triangle. */
-export const TRIANGLE_VERTEX_COUNT = 3;
-
-/** The number of numbers that the triangle shader reads: the rotation angle, the aspect ratio of the window, and the offset to the right. */
-export const TRIANGLE_UNIFORM_FLOAT_COUNT = 3;
-
 /** The `id` of the `<canvas>` element that WebGPU draws to. */
 export const CANVAS_ELEMENT_ID = "canvas";
 
@@ -55,9 +49,6 @@ export const CANVAS_OBSERVED_BOX: ResizeObserverOptions = {
   box: "device-pixel-content-box",
 };
 
-/** How far the triangle moves to the right, in screen units. A negative value moves it to the left. */
-export const TRIANGLE_OFFSET_X: number = -0.5;
-
 /** The number of corner points (vertices) of a cube: 6 faces, 2 triangles each, 3 vertices each. */
 export const CUBE_VERTEX_COUNT = 36;
 
@@ -78,6 +69,3 @@ export const CUBE_FAR_PLANE = 10;
 
 /** 1 divided by tan(30 degrees). The field of view is 60 degrees. */
 export const CUBE_FOCAL_LENGTH = 1 / Math.tan(Math.PI / 6);
-
-/** The angle after which the turn of the triangle repeats, in radians. */
-export const TRIANGLE_ANGLE_PERIOD = 2 * Math.PI;

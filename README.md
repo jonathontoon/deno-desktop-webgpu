@@ -57,7 +57,7 @@ You need a computer with a GPU that supports WebGPU.
 | `src/client/types.ts`      | The types and protocols of the page.                              |
 | `src/client/singleton.ts`  | The `Singleton` holder for classes that own a unique resource.    |
 | `src/client/gpu/`          | The WebGPU backend: `WebGPU`, `Graphics`, `Renderer`, `Pipeline`. |
-| `src/client/scene/`        | `Scene`, `createCube`, `createTriangle`, and the shaders.         |
+| `src/client/scene/`        | `Scene`, `createCube`, and the cube shader.                       |
 | `src/testing/`             | Fake GPU and canvas objects for the unit tests.                   |
 | `src/**/*.test.ts`         | The unit tests.                                                   |
 | `deno.json`                | Settings. It selects the `cef` backend.                           |

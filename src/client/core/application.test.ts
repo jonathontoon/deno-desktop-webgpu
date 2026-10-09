@@ -16,7 +16,7 @@ import { Canvas } from "./canvas.ts";
 
 /** Make a backend that records the frames that it gets. */
 function createBackend(frames: FrameInfo[]): Backend {
-  return { kind: "webgpu", render: (frame) => void frames.push(frame) };
+  return { render: (frame) => void frames.push(frame) };
 }
 
 Deno.test("Application", async (t) => {

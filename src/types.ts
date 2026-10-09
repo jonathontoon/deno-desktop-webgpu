@@ -49,9 +49,6 @@ export interface PipelineOptions {
   readonly frontFace?: GPUFrontFace;
 }
 
-/** The drawing method that the program uses to draw on the canvas. */
-export type BackendKind = "webgpu";
-
 /**
  * An object that draws the scene on the canvas with one drawing method.
  *
@@ -60,8 +57,6 @@ export type BackendKind = "webgpu";
  * it has, so a new drawing method does not change it.
  */
 export interface Backend {
-  /** The drawing method of this backend. */
-  readonly kind: BackendKind;
   /**
    * Draw one frame.
    *

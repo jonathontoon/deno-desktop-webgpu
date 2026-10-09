@@ -18,10 +18,6 @@ Deno.test("WebGPU", async (t) => {
   try {
     const backend = new WebGPU(fakeDevice.device, fakeSurface.surface);
 
-    await t.step("the kind is webgpu", () => {
-      assertEquals(backend.kind, "webgpu");
-    });
-
     await t.step("the constructor draws nothing", () => {
       assertEquals(fakeDevice.submissions.length, 0);
     });

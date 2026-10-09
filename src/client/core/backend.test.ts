@@ -3,7 +3,7 @@
  *
  * @module
  */
-import { assertEquals, assertInstanceOf, assertRejects } from "@std/assert";
+import { assertInstanceOf, assertRejects } from "@std/assert";
 import {
   createFakeDevice,
   createFakeSurface,
@@ -36,7 +36,6 @@ Deno.test("selectBackend", async (t) => {
     try {
       const backend = await selectBackend(createFakeSurface().surface);
       assertInstanceOf(backend, WebGPU);
-      assertEquals(backend.kind, "webgpu");
     } finally {
       restore();
     }

@@ -4,7 +4,7 @@
  * @module
  */
 import { CLEAR_COLOR } from "../../constants.ts";
-import type { Backend, BackendKind, FrameInfo } from "../../types.ts";
+import type { Backend, FrameInfo } from "../../types.ts";
 import { Cube } from "../scene/cube.ts";
 import { Scene } from "../scene/scene.ts";
 import { Graphics } from "./graphics.ts";
@@ -19,9 +19,6 @@ import { Renderer } from "./renderer.ts";
  * The `Graphics` object enforces this.
  */
 export class WebGPU implements Backend {
-  /** The drawing method of this backend. */
-  public readonly kind: BackendKind = "webgpu";
-
   /** The object that draws one frame. */
   private readonly renderer: Renderer;
 
